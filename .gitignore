@@ -1,0 +1,181 @@
+# CareerCatalyst .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytest_cache/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# JavaScript/Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnp.*
+.npm
+.eslintcache
+.node_repl_history
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# React/Next.js
+.next/
+out/
+.vercel
+.turbo
+
+# Build outputs
+dist/
+build/
+.output
+public/build/
+storybook-static/
+
+# IDE and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.vs/
+*.sublime-workspace
+*.sublime-project
+.classpath
+.project
+.settings/
+*.launch
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# OS specific
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependency directories
+jspm_packages/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+*.dump
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Local development configurations
+config.local.js
+settings.local.json
+local.settings.json
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+tmp/
+temp/
+
+# Dependencies lock files - uncomment if you want to ignore them
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Testing
+/coverage
+/.nyc_output
+
+# AI/ML specific
+.weights
+.h5
+.pb
+.model
+.pkl
+.joblib
+.onnx
+.pt
+.pth
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+# Sensitive information files
+*.pem
+*.key
+*.p12
+*.pfx 
