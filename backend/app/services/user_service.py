@@ -1,11 +1,16 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 from bson import ObjectId
 from jose import jwt
 from passlib.context import CryptContext
 from ..core.config import settings
 from ..db.mongodb import get_database
 from ..models.user import UserCreate, UserInDB, User
+from ..models.job import Job
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -88,4 +93,94 @@ async def authenticate_user(email: str, password: str) -> Optional[UserInDB]:
         {"$set": {"last_login": datetime.utcnow()}}
     )
     
-    return user 
+    return user
+
+# Saved jobs functionality
+async def get_saved_jobs(user_id: str) -> List[Job]:
+    """
+    Get all jobs saved by a user
+    
+    Args:
+        user_id: ID of the user
+        
+    Returns:
+        List of saved jobs
+    """
+    db = get_database()
+    try:
+        # Get user's saved job IDs
+        user = await db["users"].find_one(
+            {"_id": ObjectId(user_id)},
+            {"saved_jobs": 1}
+        )
+        
+        if not user or "saved_jobs" not in user or not user["saved_jobs"]:
+            return []
+            
+        # Convert saved_jobs to a list of ObjectIds
+        saved_job_ids = [ObjectId(job_id) for job_id in user["saved_jobs"]]
+        
+        # Fetch all the saved jobs
+        jobs = []
+        cursor = db["jobs"].find({"_id": {"$in": saved_job_ids}})
+        
+        async for job_doc in cursor:
+            jobs.append(Job(**job_doc))
+            
+        return jobs
+        
+    except Exception as e:
+        logger.error(f"Error getting saved jobs for user {user_id}: {str(e)}")
+        return []
+
+async def add_saved_job(user_id: str, job_id: str) -> bool:
+    """
+    Add a job to user's saved jobs
+    
+    Args:
+        user_id: ID of the user
+        job_id: ID of the job to save
+        
+    Returns:
+        True if job was saved successfully, False otherwise
+    """
+    db = get_database()
+    try:
+        # Update user document, adding job_id to saved_jobs array if not already present
+        result = await db["users"].update_one(
+            {"_id": ObjectId(user_id), "saved_jobs": {"$ne": job_id}},
+            {"$addToSet": {"saved_jobs": job_id}}
+        )
+        
+        # Return true if document was modified (job was added)
+        return result.modified_count > 0
+        
+    except Exception as e:
+        logger.error(f"Error saving job {job_id} for user {user_id}: {str(e)}")
+        return False
+
+async def remove_saved_job(user_id: str, job_id: str) -> bool:
+    """
+    Remove a job from user's saved jobs
+    
+    Args:
+        user_id: ID of the user
+        job_id: ID of the job to remove
+        
+    Returns:
+        True if job was removed successfully, False otherwise
+    """
+    db = get_database()
+    try:
+        # Update user document, removing job_id from saved_jobs array
+        result = await db["users"].update_one(
+            {"_id": ObjectId(user_id)},
+            {"$pull": {"saved_jobs": job_id}}
+        )
+        
+        # Return true if document was modified (job was removed)
+        return result.modified_count > 0
+        
+    except Exception as e:
+        logger.error(f"Error removing saved job {job_id} for user {user_id}: {str(e)}")
+        return False 

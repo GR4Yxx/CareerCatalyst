@@ -41,6 +41,8 @@ class Job(JobBase):
     fetched_at: datetime
     extracted_skills: List[str] = []
     relevance_score: Optional[float] = None
+    source: Optional[str] = None
+    source_id: Optional[str] = None
     
     model_config = {
         "json_encoders": {ObjectId: str},
@@ -48,10 +50,21 @@ class Job(JobBase):
     }
 
 class JobRecommendation(BaseModel):
-    job: Job
+    id: str = Field(alias="_id")
+    title: str
+    company: str
+    location: str
+    url: str
+    job_description: str
+    fetched_at: datetime
+    extracted_skills: List[str] = []
+    relevance_score: Optional[float] = None
     match_score: float
     matching_skills: List[str]
     missing_skills: List[str]
+    source: Optional[str] = None
+    source_id: Optional[str] = None
+    match_explanation: Optional[str] = None
     
     model_config = {
         "json_encoders": {ObjectId: str},
