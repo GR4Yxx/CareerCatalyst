@@ -53,7 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
       formData.append('username', credentials.username)
       formData.append('password', credentials.password)
 
-      const response = await api.post('/api/auth/login', formData.toString(), {
+      const response = await api.post('/auth/login', formData.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -89,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      await api.post('/api/auth/register', userData)
+      await api.post('/auth/register', userData)
       return true
     } catch (err) {
       const axiosError = err as AxiosError<{ detail: string }>
@@ -109,7 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const response = await api.get('/api/auth/me')
+      const response = await api.get('/auth/me')
       user.value = response.data
     } catch (err) {
       console.error('Error fetching user data:', err)
