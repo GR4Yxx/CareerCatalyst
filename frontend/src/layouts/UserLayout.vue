@@ -5,9 +5,7 @@
       <Sheet v-model:open="mobileMenuOpen" side="left">
         <SheetContent class="w-[240px] sm:w-[300px]" side="left">
           <div class="py-4">
-            <h2 class="text-lg font-semibold px-4 mb-2">Dashboard</h2>
             <nav>
-              <Separator />
               <div class="space-y-1 mt-2">
                 <RouterLink
                   v-for="item in menuItems"
@@ -28,9 +26,7 @@
 
       <aside class="hidden md:block w-[240px] border-r border-border h-[calc(100vh-64px)]">
         <div class="py-4">
-          <h2 class="text-lg font-semibold px-4 mb-2">Dashboard</h2>
           <nav>
-            <Separator />
             <div class="space-y-1 mt-2">
               <RouterLink
                 v-for="item in menuItems"
@@ -66,7 +62,7 @@
 import { ref } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import Navbar from '@/components/navigation/NavBar.vue'
-import { LayoutDashboard, Menu } from 'lucide-vue-next'
+import { LayoutDashboard, Menu, Sparkles, Briefcase, FileSearch, Map } from 'lucide-vue-next'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -74,7 +70,13 @@ import { Button } from '@/components/ui/button'
 const route = useRoute()
 const mobileMenuOpen = ref(false)
 
-const menuItems = [{ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }]
+const menuItems = [
+  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Skills Intelligence', path: '/dashboard/skills', icon: Sparkles },
+  { label: 'Job Finder', path: '/dashboard/job-finder', icon: Briefcase },
+  { label: 'ATS Intelligence', path: '/dashboard/ats-intelligence', icon: FileSearch },
+  { label: 'Career Path', path: '/dashboard/career-path', icon: Map },
+]
 
 const isActive = (path: string) => {
   return route.path === path || route.path.startsWith(`${path}/`)

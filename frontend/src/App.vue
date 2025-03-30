@@ -8,15 +8,10 @@ import { Loader2 } from 'lucide-vue-next'
 
 const themeStore = useThemeStore()
 const auth = useAuthStore()
-const isInitialized = ref(false)
+const isInitialized = ref(true)
 
-onMounted(async () => {
+onMounted(() => {
   themeStore.updateTheme()
-
-  if (localStorage.getItem('token')) {
-    await auth.checkAuth()
-  }
-  isInitialized.value = true
 })
 </script>
 
@@ -24,10 +19,7 @@ onMounted(async () => {
   <div :class="{ dark: themeStore.theme === 'dark' }">
     <main class="min-h-screen bg-background text-foreground">
       <Toaster />
-      <RouterView v-if="isInitialized" />
-      <div v-else class="min-h-screen flex items-center justify-center">
-        <Loader2 class="h-8 w-8 animate-spin" />
-      </div>
+      <RouterView />
     </main>
   </div>
 </template>

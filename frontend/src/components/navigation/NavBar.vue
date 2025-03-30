@@ -5,14 +5,16 @@
     <div class="flex h-16 items-center justify-between w-full">
       <!-- Logo -->
       <div class="flex items-center ml-4">
-        <RouterLink to="/" class="flex items-center">
-          <NetworkinLogo class="h-8 w-8" />
+        <RouterLink to="/" class="flex items-center space-x-2">
+          <div class="p-1.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow-md">
+            <Rocket class="h-6 w-6 text-white" />
+          </div>
+          <span
+            class="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"
+          >
+            Career Catalyst
+          </span>
         </RouterLink>
-      </div>
-
-      <!-- Title -->
-      <div class="flex-1 max-w-md mx-4">
-        <h1 class="text-xl font-semibold">Dashboard</h1>
       </div>
 
       <!-- Right Actions -->
@@ -52,7 +54,7 @@
         </DropdownMenu>
 
         <!-- User Profile -->
-        <DropdownMenu v-if="auth.isAuthenticated">
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" class="relative h-9 w-9 rounded-full ml-1">
               <Avatar class="h-8 w-8 ring-1 ring-slate-700">
@@ -106,8 +108,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Sun, Moon, Monitor, LogOut } from 'lucide-vue-next'
-import NetworkinLogo from '@/components/icons/NetworkinLogo.vue'
+import { Sun, Moon, Monitor, LogOut, Rocket } from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const themeStore = useThemeStore()
