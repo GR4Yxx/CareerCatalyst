@@ -13,10 +13,10 @@ const router = createRouter({
       path: '/login',
       component: () => import('@/views/auth/LoginView.vue'),
     },
-    // Regular user routes
+    // Main routes
     {
       path: '/dashboard',
-      component: () => import('@/layouts/UserLayout.vue'),
+      component: () => import('@/layouts/MainLayout.vue'),
       children: [
         {
           path: '',
@@ -37,6 +37,31 @@ const router = createRouter({
         {
           path: 'career-path',
           component: () => import('@/views/dashboard/CareerPathView.vue'),
+        },
+        // User profile menu routes
+        {
+          path: 'profile',
+          component: () => import('@/views/profile/ProfileView.vue'),
+        },
+        {
+          path: 'settings',
+          component: () => import('@/views/profile/SettingsView.vue'),
+        },
+        {
+          path: 'resumes',
+          component: () => import('@/views/profile/ResumesView.vue'),
+        },
+        {
+          path: 'saved-jobs',
+          component: () => import('@/views/profile/SavedJobsView.vue'),
+        },
+        {
+          path: 'applications',
+          component: () => import('@/views/profile/ApplicationsView.vue'),
+        },
+        {
+          path: 'notifications',
+          component: () => import('@/views/profile/NotificationsView.vue'),
         },
       ],
     },
