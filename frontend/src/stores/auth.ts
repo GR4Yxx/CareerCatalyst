@@ -113,20 +113,25 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.data
     } catch (err) {
       console.error('Error fetching user data:', err)
-      logout()
+      const axiosError = err as AxiosError<{ detail: string }>
+      error.value = axiosError.response?.data?.detail || 'Failed to fetch user data'
+      // Only logout if token is invalid (401)
+      if (axiosError.response?.status === 401) {
+        logout(false) // Pass false to prevent redirect
+      }
     } finally {
       loading.value = false
     }
   }
 
   // Logout function
-  function logout(): void {
+  function logout(redirect: boolean = true): void {
     token.value = null
     user.value = null
     localStorage.removeItem('token')
 
-    // Redirect to login page
-    if (router) {
+    // Redirect to login page if requested
+    if (redirect && router) {
       router.push('/login')
     }
   }

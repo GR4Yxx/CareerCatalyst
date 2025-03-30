@@ -142,22 +142,6 @@
               />
             </div>
 
-            <div class="flex items-center space-x-3">
-              <Checkbox
-                id="terms"
-                v-model="formData.termsAgreed"
-                class="border-indigo-700/30 data-[state=checked]:bg-indigo-600"
-                :disabled="isLoading"
-                required
-              />
-              <Label for="terms" class="text-sm font-medium text-indigo-200">
-                I agree to the
-                <a href="#" class="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
-                and
-                <a href="#" class="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
-              </Label>
-            </div>
-
             <div
               v-if="error"
               class="p-3 bg-red-950/40 border border-red-800/30 rounded-md text-red-300 text-sm"
@@ -169,7 +153,7 @@
               type="submit"
               class="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
               :class="{ 'opacity-90 hover:bg-indigo-600': isLoading }"
-              :disabled="isLoading || !formIsValid"
+              :disabled="isLoading"
             >
               <Loader2 v-if="isLoading" class="mr-2 h-5 w-5 animate-spin" />
               {{ isLoading ? 'Creating Account...' : 'Create Account' }}
@@ -218,7 +202,6 @@ const formData = reactive({
   name: '',
   email: '',
   password: '',
-  termsAgreed: false,
 })
 
 const formIsValid = computed(() => {
@@ -226,26 +209,29 @@ const formIsValid = computed(() => {
     formData.name.trim() !== '' &&
     formData.email.trim() !== '' &&
     formData.password.length >= 8 &&
-    formData.password === confirmPassword.value &&
-    formData.termsAgreed
+    formData.password === confirmPassword.value
   )
 })
 
 async function handleRegister() {
-  if (!formIsValid.value) {
-    if (formData.password !== confirmPassword.value) {
-      error.value = 'Passwords do not match'
-    } else if (formData.password.length < 8) {
-      error.value = 'Password must be at least 8 characters'
-    } else if (!formData.termsAgreed) {
-      error.value = 'You must agree to the Terms of Service and Privacy Policy'
-    } else {
-      error.value = 'Please fill out all fields correctly'
-    }
+  // Perform validation checks
+  error.value = ''
+
+  if (formData.password !== confirmPassword.value) {
+    error.value = 'Passwords do not match'
     return
   }
 
-  error.value = ''
+  if (formData.password.length < 8) {
+    error.value = 'Password must be at least 8 characters'
+    return
+  }
+
+  if (formData.name.trim() === '' || formData.email.trim() === '') {
+    error.value = 'Please fill out all fields correctly'
+    return
+  }
+
   isLoading.value = true
 
   try {
