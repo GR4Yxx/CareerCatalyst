@@ -34,8 +34,8 @@ class ResumeOptimizationResponse(BaseModel):
 logger = logging.getLogger(__name__)
 
 # Define Gemini API key
-GEMINI_API_KEY = "AIzaSyAEO9xdicSGhXeChy5x7sFxcDYTrFhzLUc"
-GEMINI_AVAILABLE = True
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_AVAILABLE = GEMINI_API_KEY is not None
 
 router = APIRouter()
 

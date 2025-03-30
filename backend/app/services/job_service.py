@@ -19,11 +19,15 @@ logger = logging.getLogger(__name__)
 
 # API configuration
 JSEARCH_API_URL = "https://jsearch.p.rapidapi.com/search"
-JSEARCH_API_KEY = os.getenv("JSEARCH_API_KEY", "5e52392064msh7bca40c300ae3b2p1f89edjsn59c83a4b877e")
+JSEARCH_API_KEY = os.getenv("JSEARCH_API_KEY")
 JSEARCH_HEADERS = {
     "X-RapidAPI-Key": JSEARCH_API_KEY,
     "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
 }
+
+# Check if API key is available
+if not JSEARCH_API_KEY:
+    logger.warning("JSEARCH_API_KEY not found in environment. API calls will likely fail.")
 
 # Collection names
 JOBS_COLLECTION = "jobs"
