@@ -3,7 +3,12 @@
     <div class="flex items-center justify-between">
       <div>
         <h3 class="font-medium text-muted-foreground">{{ title }}</h3>
-        <p class="text-3xl font-bold mt-1">{{ count }}</p>
+        <p class="text-3xl font-bold mt-1">
+          <span v-if="loading">
+            <span class="animate-pulse">...</span>
+          </span>
+          <span v-else>{{ count }}</span>
+        </p>
       </div>
       <div class="text-primary">
         <slot></slot>
@@ -21,6 +26,10 @@ defineProps({
   count: {
     type: Number,
     default: 0,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
   },
 })
 </script>

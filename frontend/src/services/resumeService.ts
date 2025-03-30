@@ -105,6 +105,19 @@ class ResumeService {
   }
 
   /**
+   * Get the number of resumes for the current user
+   */
+  async getUserResumeCount(): Promise<number> {
+    try {
+      const response = await api.get('/resumes/user/count')
+      return response.data
+    } catch (error) {
+      console.error('Error fetching resume count:', error)
+      return 0
+    }
+  }
+
+  /**
    * Get a resume with all its versions
    */
   async getResumeWithVersions(resumeId: string): Promise<ResumeWithVersions> {

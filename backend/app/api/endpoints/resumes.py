@@ -89,6 +89,16 @@ async def get_user_resumes(
     resumes = await resume_service.get_resumes_by_user(current_user.id)
     return resumes
 
+@router.get("/user/count", response_model=int)
+async def get_user_resume_count(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the count of resumes for the authenticated user.
+    """
+    resumes = await resume_service.get_resumes_by_user(current_user.id)
+    return len(resumes)
+
 @router.get("/profile/{profile_id}", response_model=List[Resume])
 async def get_resumes_by_profile(
     profile_id: str,
