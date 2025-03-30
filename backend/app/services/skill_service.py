@@ -430,29 +430,22 @@ async def get_skills_by_resume(resume_id: str) -> Optional[UserSkill]:
 
 async def get_skills_by_user(user_id: str) -> List[UserSkill]:
     """
-    Get all skills for a user.
+    Get all skills for a user
+    
+    Args:
+        user_id: The user's ID
+        
+    Returns:
+        List of UserSkill documents
     """
     db = get_database()
-    user_skills_collection = db["user_skills"]
+    cursor = db["user_skills"].find({"user_id": user_id}).sort("created_at", -1)
     
-    cursor = user_skills_collection.find({"user_id": ObjectId(user_id)}).sort("created_at", -1)
-    skills_list = await cursor.to_list(length=None)
+    skills = []
+    async for doc in cursor:
+        skills.append(UserSkill(**doc))
     
-    result = []
-    for skill_data in skills_list:
-        # Convert ObjectId fields to strings
-        if "_id" in skill_data:
-            skill_data["id"] = str(skill_data.pop("_id"))
-        if "user_id" in skill_data and isinstance(skill_data["user_id"], ObjectId):
-            skill_data["user_id"] = str(skill_data["user_id"])
-        if "profile_id" in skill_data and isinstance(skill_data["profile_id"], ObjectId):
-            skill_data["profile_id"] = str(skill_data["profile_id"])
-        if "resume_id" in skill_data and isinstance(skill_data["resume_id"], ObjectId):
-            skill_data["resume_id"] = str(skill_data["resume_id"])
-        
-        result.append(UserSkill(**skill_data))
-    
-    return result
+    return skills
 
 async def get_skills_by_profile(profile_id: str) -> List[UserSkill]:
     """
