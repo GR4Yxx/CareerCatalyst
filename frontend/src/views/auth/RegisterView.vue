@@ -23,71 +23,158 @@
         <h1
           class="text-4xl font-bold tracking-tight text-white bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-300 text-transparent bg-clip-text"
         >
-          Networkin
+          CareerCatalyst
         </h1>
-        <p class="mt-2 text-lg text-indigo-200/80">Your Professional Networking Platform</p>
+        <p class="mt-2 text-lg text-indigo-200/80">Accelerate Your Career Journey</p>
       </div>
 
-      <FeatureList />
+      <!-- Feature List -->
+      <div class="space-y-10 animate-fade-in-delay">
+        <div class="flex items-start space-x-6 transition-all duration-300 hover:translate-x-1">
+          <div
+            class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
+          >
+            <FileText class="h-7 w-7 text-indigo-400" />
+          </div>
+          <div>
+            <h3 class="text-lg font-medium text-white">Resume Optimization</h3>
+            <p class="mt-1.5 text-indigo-200/70">Tailor your resume to specific job listings</p>
+          </div>
+        </div>
+
+        <div class="flex items-start space-x-6 transition-all duration-300 hover:translate-x-1">
+          <div
+            class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
+          >
+            <SearchCheck class="h-7 w-7 text-indigo-400" />
+          </div>
+          <div>
+            <h3 class="text-lg font-medium text-white">ATS Intelligence</h3>
+            <p class="mt-1.5 text-indigo-200/70">Optimize for applicant tracking systems</p>
+          </div>
+        </div>
+
+        <div class="flex items-start space-x-6 transition-all duration-300 hover:translate-x-1">
+          <div
+            class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
+          >
+            <GraduationCap class="h-7 w-7 text-indigo-400" />
+          </div>
+          <div>
+            <h3 class="text-lg font-medium text-white">Career Growth</h3>
+            <p class="mt-1.5 text-indigo-200/70">
+              Get personalized career advice and skill recommendations
+            </p>
+          </div>
+        </div>
+      </div>
 
       <!-- Footer with Theme Toggle -->
       <div class="space-y-6 animate-fade-in-delay-2">
         <ThemeToggle />
-        <p class="text-sm text-indigo-300/60">© 2025 Networkin. All rights reserved.</p>
+        <p class="text-sm text-indigo-300/60">© 2024 CareerCatalyst. All rights reserved.</p>
       </div>
     </div>
 
-    <!-- Right side - Registration wizard -->
+    <!-- Right side - Registration form -->
     <div class="flex-1 flex items-center justify-center p-8 relative z-10">
-      <div class="w-full max-w-[520px] space-y-6 animate-fade-in">
+      <div class="w-full max-w-[480px] space-y-8 animate-fade-in">
         <div class="text-center">
           <h2 class="text-3xl font-bold tracking-tight text-white mb-2">Create your account</h2>
-          <p class="text-base text-indigo-200/80">Join our professional networking platform</p>
+          <p class="text-base text-indigo-200/80">Join CareerCatalyst to accelerate your career</p>
         </div>
 
-        <!-- Progress stepper -->
-        <RegistrationStepper :steps="steps" :current-step="currentStep" />
-
-        <!-- Form container -->
         <div
           class="bg-slate-900/80 backdrop-blur-sm border border-indigo-800/20 p-8 rounded-2xl shadow-xl"
         >
-          <!-- Dynamic step component -->
-          <component
-            :is="currentStepComponent"
-            :form-data="formData"
-            :social-profiles="socialProfiles"
-            :is-loading="isLoading"
-            @update:formData="updateFormData"
-            @update:socialProfiles="updateSocialProfiles"
-            @image-upload="handleImageUpload"
-          />
+          <form @submit.prevent="handleRegister" class="space-y-6">
+            <div class="space-y-4">
+              <Label for="full_name" class="text-base text-indigo-200">Full Name</Label>
+              <Input
+                id="full_name"
+                v-model="formData.name"
+                type="text"
+                placeholder="John Doe"
+                class="h-12 bg-slate-800/70 border-indigo-700/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                :disabled="isLoading"
+                required
+              />
+            </div>
 
-          <!-- Navigation Buttons -->
-          <div class="flex justify-between mt-8">
-            <Button
-              v-if="currentStep > 0"
-              type="button"
-              variant="outline"
-              class="border-indigo-700/30 text-indigo-200 hover:bg-indigo-950/50 hover:text-indigo-100"
-              :disabled="isLoading"
-              @click="previousStep"
+            <div class="space-y-4">
+              <Label for="email" class="text-base text-indigo-200">Email</Label>
+              <Input
+                id="email"
+                v-model="formData.email"
+                type="email"
+                placeholder="name@example.com"
+                class="h-12 bg-slate-800/70 border-indigo-700/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                :disabled="isLoading"
+                required
+              />
+            </div>
+
+            <div class="space-y-4">
+              <Label for="password" class="text-base text-indigo-200">Password</Label>
+              <Input
+                id="password"
+                v-model="formData.password"
+                type="password"
+                class="h-12 bg-slate-800/70 border-indigo-700/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                :disabled="isLoading"
+                required
+                minlength="8"
+              />
+              <p class="text-xs text-indigo-300/70">Password must be at least 8 characters long</p>
+            </div>
+
+            <div class="space-y-4">
+              <Label for="confirm_password" class="text-base text-indigo-200"
+                >Confirm Password</Label
+              >
+              <Input
+                id="confirm_password"
+                v-model="confirmPassword"
+                type="password"
+                class="h-12 bg-slate-800/70 border-indigo-700/30 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                :disabled="isLoading"
+                required
+              />
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <Checkbox
+                id="terms"
+                v-model="formData.termsAgreed"
+                class="border-indigo-700/30 data-[state=checked]:bg-indigo-600"
+                :disabled="isLoading"
+                required
+              />
+              <Label for="terms" class="text-sm font-medium text-indigo-200">
+                I agree to the
+                <a href="#" class="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
+                and
+                <a href="#" class="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
+              </Label>
+            </div>
+
+            <div
+              v-if="error"
+              class="p-3 bg-red-950/40 border border-red-800/30 rounded-md text-red-300 text-sm"
             >
-              Back
-            </Button>
-            <div v-else></div>
+              {{ error }}
+            </div>
 
             <Button
-              type="button"
-              class="bg-indigo-600 hover:bg-indigo-700 text-white"
+              type="submit"
+              class="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
               :class="{ 'opacity-90 hover:bg-indigo-600': isLoading }"
               :disabled="isLoading"
-              @click="nextStep"
             >
               <Loader2 v-if="isLoading" class="mr-2 h-5 w-5 animate-spin" />
-              {{ isLastStep ? 'Create Account' : 'Continue' }}
+              {{ isLoading ? 'Creating Account...' : 'Create Account' }}
             </Button>
-          </div>
+          </form>
         </div>
 
         <div class="text-center">
@@ -107,414 +194,95 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { FileText, SearchCheck, GraduationCap, Loader2 } from 'lucide-vue-next'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
-import FeatureList from '@/components/auth/FeatureList.vue'
-import RegistrationStepper from '@/components/auth/RegistrationStepper.vue'
-import BasicInfoStep from '@/components/auth/registration/BasicInfoStep.vue'
-import SubscriptionStep from '@/components/auth/registration/SubscriptionStep.vue'
-import ProfileSetupStep from '@/components/auth/registration/ProfileSetupStep.vue'
-import FinalReviewStep from '@/components/auth/registration/FinalReviewStep.vue'
-import api from '@/config/axios'
+import { useAuthStore } from '@/stores/auth'
 import type { AxiosError } from 'axios'
-
-interface FormDataType {
-  username: string
-  first_name: string
-  last_name: string
-  primary_email: string
-  password: string
-  password_confirmation: string
-  role: 'regular' | 'organizer' | 'admin'
-  company_name: string
-  subscription_plan: string
-  avatar_path: string
-  avatar_file: File | null
-  bio: string
-  job_title: string
-  phone: string
-  preferred_timezone: string
-  profile_visibility: boolean
-  privacy_agreed: boolean
-  terms_agreed: boolean
-  marketing_agreed: boolean
-}
-
-interface SocialProfileType {
-  [key: string]: {
-    social_type: string
-    handle: string
-    url: string
-    visibility: boolean
-  }
-}
 
 const router = useRouter()
 const { toast } = useToast()
+const auth = useAuthStore()
 const isLoading = ref(false)
-const previewImage = ref('')
-
-// Step management
-const steps = [
-  { title: 'Account' },
-  { title: 'Subscription' },
-  { title: 'Profile' },
-  { title: 'Review' },
-]
-const currentStep = ref(0)
-const isLastStep = computed(() => currentStep.value === steps.length - 1)
-
-// Dynamic component based on current step
-const currentStepComponent = computed(() => {
-  switch (currentStep.value) {
-    case 0:
-      return BasicInfoStep
-    case 1:
-      return SubscriptionStep
-    case 2:
-      return ProfileSetupStep
-    case 3:
-      return FinalReviewStep
-    default:
-      return BasicInfoStep
-  }
-})
+const error = ref('')
+const confirmPassword = ref('')
 
 // Form data
 const formData = reactive({
-  // Basic account info
-  username: '',
-  first_name: '',
-  last_name: '',
-  primary_email: '',
+  name: '',
+  email: '',
   password: '',
-  password_confirmation: '',
-  role: 'regular' as 'regular' | 'organizer' | 'admin',
-  company_name: '',
-
-  // Subscription
-  subscription_plan: 'free',
-
-  // Profile
-  avatar_path: '',
-  avatar_file: null as File | null,
-  bio: '',
-  job_title: '',
-  phone: '',
-  preferred_timezone: 'UTC',
-  profile_visibility: true,
-
-  // Terms
-  privacy_agreed: false,
-  terms_agreed: false,
-  marketing_agreed: false,
+  termsAgreed: false,
 })
 
-// Social profiles
-const socialProfiles = reactive({
-  linkedin: { social_type: 'linkedin', handle: '', url: '', visibility: true },
-  twitter: { social_type: 'twitter', handle: '', url: '', visibility: true },
-  instagram: { social_type: 'instagram', handle: '', url: '', visibility: true },
+const formIsValid = computed(() => {
+  return (
+    formData.name.trim() !== '' &&
+    formData.email.trim() !== '' &&
+    formData.password.length >= 8 &&
+    formData.password === confirmPassword.value &&
+    formData.termsAgreed
+  )
 })
 
-// Load saved form data from localStorage if available
-onMounted(() => {
-  const savedData = localStorage.getItem('registration_form_data')
-  if (savedData) {
-    const parsedData = JSON.parse(savedData)
-    Object.assign(formData, parsedData)
-  }
-
-  const savedStep = localStorage.getItem('registration_current_step')
-  if (savedStep) {
-    currentStep.value = parseInt(savedStep, 10)
-  }
-
-  const savedSocials = localStorage.getItem('registration_social_profiles')
-  if (savedSocials) {
-    const parsedSocials = JSON.parse(savedSocials)
-    Object.assign(socialProfiles, parsedSocials)
-  }
-})
-
-// Save form data to localStorage when updated
-watch(
-  [formData, currentStep, socialProfiles],
-  () => {
-    localStorage.setItem('registration_form_data', JSON.stringify(formData))
-    localStorage.setItem('registration_current_step', currentStep.value.toString())
-    localStorage.setItem('registration_social_profiles', JSON.stringify(socialProfiles))
-  },
-  { deep: true },
-)
-
-// Update methods for child components
-function updateFormData(newData: Partial<FormDataType>) {
-  Object.assign(formData, newData)
-}
-
-function updateSocialProfiles(newProfiles: Partial<SocialProfileType>) {
-  Object.assign(socialProfiles, newProfiles)
-}
-
-// Image upload handling
-function handleImageUpload(file: File | null) {
-  if (!file) return
-
-  // Validate file type
-  if (!file.type.startsWith('image/')) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid file type',
-      description: 'Please upload an image file (JPG, PNG, etc.)',
-    })
-    return
-  }
-
-  // Create a preview URL
-  previewImage.value = URL.createObjectURL(file)
-
-  // Store the file reference
-  formData.avatar_file = file as File
-}
-
-// Step navigation
-function nextStep() {
-  if (currentStep.value === 0) {
-    if (!validateBasicInfo()) return
-  } // Update this section in your nextStep function
-  else if (currentStep.value === 3) {
-    // This is the final step, process registration
-    console.log('Final step, validating...')
-
-    const finalStepValid = validateFinalStep()
-    console.log('Final step validation:', finalStepValid)
-
-    const registrationDataValid = validateRegistrationData()
-    console.log('Registration data validation:', registrationDataValid)
-
-    if (!finalStepValid || !registrationDataValid) {
-      console.log('Validation failed, not proceeding')
-      return
-    }
-
-    console.log('All validation passed, calling handleRegister()')
-    handleRegister()
-    return
-  }
-
-  // Move to next step
-  if (currentStep.value < steps.length - 1) {
-    currentStep.value++
-  }
-}
-
-function previousStep() {
-  if (currentStep.value > 0) {
-    currentStep.value--
-  }
-}
-
-// Validation
-function validateBasicInfo() {
-  // Username validation
-  if (!formData.username || formData.username.length < 3) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid Username',
-      description: 'Username must be at least 3 characters long',
-    })
-    return false
-  }
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!formData.primary_email || !emailRegex.test(formData.primary_email)) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid Email',
-      description: 'Please enter a valid email address',
-    })
-    return false
-  }
-
-  // Password validation
-  if (!formData.password || formData.password.length < 8) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid Password',
-      description: 'Password must be at least 8 characters long',
-    })
-    return false
-  }
-
-  // Password confirmation
-  if (formData.password !== formData.password_confirmation) {
-    toast({
-      variant: 'destructive',
-      title: 'Password Mismatch',
-      description: 'Passwords do not match',
-    })
-    return false
-  }
-
-  // Company name (for organizers)
-  if (formData.role === 'organizer' && !formData.company_name) {
-    toast({
-      variant: 'destructive',
-      title: 'Company Name Required',
-      description: 'Please enter your company name',
-    })
-    return false
-  }
-
-  return true
-}
-
-function validateFinalStep() {
-  // Terms validation
-  if (!formData.terms_agreed || !formData.privacy_agreed) {
-    toast({
-      variant: 'destructive',
-      title: 'Terms Required',
-      description: 'You must agree to the Terms of Service and Privacy Policy',
-    })
-    console.log('Terms not agreed to:', {
-      terms: formData.terms_agreed,
-      privacy: formData.privacy_agreed,
-    })
-    return false
-  }
-
-  return true
-}
-
-// In RegisterView.vue
 async function handleRegister() {
-  console.log('handleRegister function called')
+  // Perform validation checks
+  error.value = ''
+
+  if (formData.password !== confirmPassword.value) {
+    error.value = 'Passwords do not match'
+    return
+  }
+
+  if (formData.password.length < 8) {
+    error.value = 'Password must be at least 8 characters'
+    return
+  }
+
+  if (!formData.termsAgreed) {
+    error.value = 'You must agree to the Terms of Service and Privacy Policy'
+    return
+  }
+
+  if (formData.name.trim() === '' || formData.email.trim() === '') {
+    error.value = 'Please fill out all fields correctly'
+    return
+  }
+
   isLoading.value = true
 
   try {
-    // Create form data for user registration
-    const registrationData = new FormData()
-
-    // Add all basic user fields
-    for (const [key, value] of Object.entries(formData)) {
-      // Skip fields not needed for API
-      if (
-        [
-          'privacy_agreed',
-          'terms_agreed',
-          'marketing_agreed',
-          'job_title', // We'll handle this specifically if needed
-        ].includes(key)
-      )
-        continue
-
-      // Handle file upload
-      if (key === 'avatar_file' && value) {
-        registrationData.append('avatar', value as Blob)
-      } else if (value !== null && value !== undefined) {
-        registrationData.append(key, String(value))
-      }
-    }
-
-    // Add job title as display_name_suffix if provided
-    if (formData.job_title) {
-      registrationData.append('job_title', formData.job_title)
-    }
-
-    // Process social profiles - filter out empty ones
-    const socialProfilesArray = Object.values(socialProfiles)
-      .filter((social) => social.handle && social.handle.trim() !== '')
-      .map((social) => ({
-        social_type: social.social_type,
-        social_handle: social.handle,
-        social_url:
-          social.url || `https://${social.social_type}.com/${social.handle.replace('@', '')}`,
-        visibility: social.visibility,
-      }))
-
-    if (socialProfilesArray.length > 0) {
-      registrationData.append('social_profiles', JSON.stringify(socialProfilesArray))
-    }
-
-    console.log('Sending registration data with social profiles:', {
-      ...formData,
-      password: '[REDACTED]',
-      profile_visibility: formData.profile_visibility,
-      social_profiles: socialProfilesArray,
+    const success = await auth.register({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
     })
 
-    // Send registration request
-    const response = await api.post('/users', registrationData)
+    if (success) {
+      toast({
+        title: 'Registration successful',
+        description: 'Your account has been created! You can now log in.',
+      })
 
-    // Success! Show message and redirect
-    toast({
-      title: 'Account Created',
-      description: 'Your account has been successfully created! You can now log in.',
-    })
-
-    // Clear registration data from localStorage
-    localStorage.removeItem('registration_form_data')
-    localStorage.removeItem('registration_current_step')
-    localStorage.removeItem('registration_social_profiles')
-
-    // Redirect to login page
-    router.push('/login')
-  } catch (error) {
-    // Error handling...
+      // Redirect to login page
+      router.push('/login')
+    } else {
+      error.value = auth.error || 'Registration failed. Please try again.'
+    }
+  } catch (err) {
+    const axiosError = err as AxiosError<{ detail: string }>
+    error.value =
+      axiosError.response?.data?.detail || 'An unexpected error occurred during registration'
+    console.error('Registration error:', err)
   } finally {
     isLoading.value = false
   }
-}
-
-function validateRegistrationData() {
-  // Validate username
-  if (!formData.username || formData.username.length < 3) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid Username',
-      description: 'Username must be at least 3 characters long',
-    })
-    return false
-  }
-
-  // Validate email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!formData.primary_email || !emailRegex.test(formData.primary_email)) {
-    toast({
-      variant: 'destructive',
-      title: 'Invalid Email',
-      description: 'Please enter a valid email address',
-    })
-    return false
-  }
-
-  // Validate required fields based on your database schema
-  if (!formData.first_name || !formData.last_name) {
-    toast({
-      variant: 'destructive',
-      title: 'Missing Information',
-      description: 'Please provide your first and last name',
-    })
-    return false
-  }
-
-  if (formData.role === 'organizer' && !formData.company_name) {
-    toast({
-      variant: 'destructive',
-      title: 'Company Name Required',
-      description: 'Please enter your company name for organizer accounts',
-    })
-    return false
-  }
-
-  return true
 }
 </script>
 

@@ -23,9 +23,9 @@
         <h1
           class="text-4xl font-bold tracking-tight text-white bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-300 text-transparent bg-clip-text"
         >
-          Networkin
+          CareerCatalyst
         </h1>
-        <p class="mt-2 text-lg text-indigo-200/80">Your Professional Networking Platform</p>
+        <p class="mt-2 text-lg text-indigo-200/80">Accelerate Your Career Journey</p>
       </div>
 
       <!-- Feature List -->
@@ -34,11 +34,11 @@
           <div
             class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
           >
-            <Users class="h-7 w-7 text-indigo-400" />
+            <FileText class="h-7 w-7 text-indigo-400" />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-white">Connect with Professionals</h3>
-            <p class="mt-1.5 text-indigo-200/70">Build meaningful relationships at events</p>
+            <h3 class="text-lg font-medium text-white">Resume Optimization</h3>
+            <p class="mt-1.5 text-indigo-200/70">Tailor your resume to specific job listings</p>
           </div>
         </div>
 
@@ -46,11 +46,11 @@
           <div
             class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
           >
-            <Calendar class="h-7 w-7 text-indigo-400" />
+            <SearchCheck class="h-7 w-7 text-indigo-400" />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-white">Manage Events</h3>
-            <p class="mt-1.5 text-indigo-200/70">Organize and attend networking events</p>
+            <h3 class="text-lg font-medium text-white">ATS Intelligence</h3>
+            <p class="mt-1.5 text-indigo-200/70">Optimize for applicant tracking systems</p>
           </div>
         </div>
 
@@ -58,11 +58,13 @@
           <div
             class="p-3 rounded-xl bg-indigo-950/50 border border-indigo-700/20 shadow-lg shadow-indigo-900/20"
           >
-            <Share2 class="h-7 w-7 text-indigo-400" />
+            <GraduationCap class="h-7 w-7 text-indigo-400" />
           </div>
           <div>
-            <h3 class="text-lg font-medium text-white">Expand Your Network</h3>
-            <p class="mt-1.5 text-indigo-200/70">Connect across multiple social platforms</p>
+            <h3 class="text-lg font-medium text-white">Career Growth</h3>
+            <p class="mt-1.5 text-indigo-200/70">
+              Get personalized career advice and skill recommendations
+            </p>
           </div>
         </div>
       </div>
@@ -70,7 +72,7 @@
       <!-- Footer with Theme Toggle -->
       <div class="space-y-6 animate-fade-in-delay-2">
         <ThemeToggle />
-        <p class="text-sm text-indigo-300/60">© 2025 Networkin. All rights reserved.</p>
+        <p class="text-sm text-indigo-300/60">© 2024 CareerCatalyst. All rights reserved.</p>
       </div>
     </div>
 
@@ -128,6 +130,13 @@
               <Label for="remember" class="text-sm font-medium text-indigo-200">Remember me</Label>
             </div>
 
+            <div
+              v-if="errorMessage"
+              class="p-3 bg-red-950/40 border border-red-800/30 rounded-md text-red-300 text-sm"
+            >
+              {{ errorMessage }}
+            </div>
+
             <Button
               type="submit"
               class="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
@@ -165,7 +174,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Users, Calendar, Share2, Loader2 } from 'lucide-vue-next'
+import { FileText, SearchCheck, GraduationCap, Loader2 } from 'lucide-vue-next'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import type { AxiosError } from 'axios'
 
@@ -177,9 +186,11 @@ const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 async function handleLogin() {
   if (!email.value || !password.value) {
+    errorMessage.value = 'Please fill in all fields'
     toast({
       variant: 'destructive',
       title: 'Error',
@@ -189,37 +200,33 @@ async function handleLogin() {
   }
 
   isLoading.value = true
+  errorMessage.value = ''
+
   try {
-    await auth.login({
-      email: email.value,
+    const success = await auth.login({
+      username: email.value, // FastAPI expects username field
       password: password.value,
-      remember: rememberMe.value,
     })
 
-    toast({
-      title: 'Success',
-      description: 'Welcome back! You have successfully logged in.',
-    })
-
-    // Redirect based on user role
-    switch (auth.user?.role) {
-      case 'admin':
-        router.push('/admin')
-        break
-      case 'organizer':
-        router.push('/organizer')
-        break
-      default:
-        router.push('/dashboard')
+    if (success) {
+      // Redirect to dashboard after login
+      router.push('/dashboard')
+    } else {
+      errorMessage.value = auth.error || 'Invalid email or password'
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: errorMessage.value,
+      })
     }
   } catch (error) {
-    const axiosError = error as AxiosError<{ message: string }>
-    const errorMessage = axiosError.response?.data?.message || 'An error occurred during login'
+    const axiosError = error as AxiosError<{ detail: string }>
+    errorMessage.value = axiosError.response?.data?.detail || 'Invalid email or password'
 
     toast({
       variant: 'destructive',
       title: 'Authentication Error',
-      description: errorMessage,
+      description: errorMessage.value,
     })
 
     console.error('Login error:', error)

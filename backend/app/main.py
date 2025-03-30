@@ -1,89 +1,66 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from typing import Dict, List, Optional
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+import logging
 
-# Initialize FastAPI app
-app = FastAPI(
-    title="CareerCatalyst API",
-    description="API for AI-powered career navigation system",
-    version="0.1.0"
+from .api.api import api_router
+from .core.config import settings
+from .db.mongodb import connect_to_mongo, close_mongo_connection
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO if settings.DEBUG else logging.WARNING,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-# Configure CORS
+# Create FastAPI app
+app = FastAPI(
+    title="CareerCatalyst API",
+    description="API for CareerCatalyst - AI-Powered Career Navigation System",
+    version="0.1.0",
+)
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Models
-class Skill(BaseModel):
-    name: str
-    category: str
-    confidence: float
-    experience_years: Optional[float] = None
+# Register startup and shutdown events
+@app.on_event("startup")
+async def startup_db_client():
+    await connect_to_mongo()
 
-class SkillProfile(BaseModel):
-    skills: List[Skill]
-    total_skills: int
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    await close_mongo_connection()
 
-class JobRecommendation(BaseModel):
-    job_id: str
-    title: str
-    company: str
-    match_percentage: float
-    location: str
-    salary_range: Optional[str] = None
-    description: str
+# Include API router
+app.include_router(api_router, prefix="/api")
 
-# Routes
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Log the error
+    logging.error(f"Unhandled exception: {exc}", exc_info=True)
+    
+    # Return a JSON response
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred. Please try again later."}
+    )
+
+# Root endpoint
 @app.get("/")
 async def root():
-    return {"message": "Welcome to CareerCatalyst API", "status": "operational"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
-@app.get("/api/skills/profile", response_model=SkillProfile)
-async def get_skills_profile():
-    # Dummy data for demonstration
-    skills = [
-        Skill(name="Python", category="Programming Language", confidence=0.95, experience_years=3.5),
-        Skill(name="FastAPI", category="Framework", confidence=0.88, experience_years=1.2),
-        Skill(name="Data Analysis", category="Domain Knowledge", confidence=0.85, experience_years=2.0),
-        Skill(name="Project Management", category="Soft Skill", confidence=0.78, experience_years=4.0),
-    ]
-    return SkillProfile(skills=skills, total_skills=len(skills))
-
-@app.get("/api/jobs/recommendations", response_model=List[JobRecommendation])
-async def get_job_recommendations():
-    # Dummy data for demonstration
-    recommendations = [
-        JobRecommendation(
-            job_id="job123",
-            title="Senior Python Developer",
-            company="TechCorp Inc.",
-            match_percentage=87.5,
-            location="Remote",
-            salary_range="$110,000 - $130,000",
-            description="Senior developer position focused on building scalable APIs and services."
-        ),
-        JobRecommendation(
-            job_id="job456",
-            title="Data Scientist",
-            company="Analytics Co.",
-            match_percentage=82.3,
-            location="New York, NY",
-            salary_range="$95,000 - $120,000",
-            description="Data science role with focus on machine learning models and data analysis."
-        )
-    ]
-    return recommendations
+    return {
+        "message": "Welcome to CareerCatalyst API",
+        "docs": "/docs",
+        "status": "online"
+    }
 
 if __name__ == "__main__":
     import uvicorn
