@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional
 import io
 
 from ...models.user import User
 from ...models.resume import Resume, ResumeVersion, ResumeWithVersions
-from ...services import resume_service, profile_service
+from ...services import resume_service, profile_service, skill_service
 from ..endpoints.auth import get_current_user
 
 router = APIRouter()
@@ -14,11 +14,14 @@ router = APIRouter()
 async def upload_resume(
     file: UploadFile = File(...),
     profile_id: Optional[str] = Form(None),
+    analyze_skills: bool = Form(True),
+    background_tasks: BackgroundTasks = None,
     current_user: User = Depends(get_current_user)
 ):
     """
     Upload a new resume.
     If profile_id is provided, links to that profile, otherwise links directly to the user.
+    Extracts and analyzes skills using Gemini if analyze_skills is True.
     """
     # Validate file type
     allowed_types = [
@@ -47,6 +50,17 @@ async def upload_resume(
                 file_type=file.content_type,
                 profile_id=profile_id
             )
+            
+            # Analyze skills if requested
+            if analyze_skills:
+                # Run skill analysis in background
+                background_tasks.add_task(
+                    skill_service.analyze_resume_skills,
+                    resume_id=resume.id,
+                    file_content=file_content,
+                    file_type=file.content_type,
+                    profile_id=profile_id
+                )
         else:
             # Otherwise link directly to user
             resume = await resume_service.upload_resume(
@@ -55,6 +69,17 @@ async def upload_resume(
                 file_type=file.content_type,
                 user_id=current_user.id
             )
+            
+            # Analyze skills if requested
+            if analyze_skills:
+                # Run skill analysis in background
+                background_tasks.add_task(
+                    skill_service.analyze_resume_skills,
+                    resume_id=resume.id,
+                    file_content=file_content,
+                    file_type=file.content_type,
+                    user_id=current_user.id
+                )
         return resume
     except ValueError as e:
         raise HTTPException(
@@ -88,6 +113,16 @@ async def get_user_resumes(
     """
     resumes = await resume_service.get_resumes_by_user(current_user.id)
     return resumes
+
+@router.get("/user/count", response_model=int)
+async def get_user_resume_count(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the count of resumes for the authenticated user.
+    """
+    resumes = await resume_service.get_resumes_by_user(current_user.id)
+    return len(resumes)
 
 @router.get("/profile/{profile_id}", response_model=List[Resume])
 async def get_resumes_by_profile(

@@ -11,6 +11,9 @@
       <DashboardCard title="Welcome" :count="1">
         <User class="h-8 w-8" />
       </DashboardCard>
+      <DashboardCard title="Resumes" :count="resumeCount" :loading="loading">
+        <FileText class="h-8 w-8" />
+      </DashboardCard>
     </div>
 
     <!-- Welcome Section -->
@@ -27,6 +30,21 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDashboard, User } from 'lucide-vue-next'
+import { LayoutDashboard, User, FileText } from 'lucide-vue-next'
 import DashboardCard from '@/components/dashboard/DashboardCard.vue'
+import { onMounted, ref } from 'vue'
+import { resumeService } from '@/services/resumeService'
+
+const resumeCount = ref(0)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    resumeCount.value = await resumeService.getUserResumeCount()
+  } catch (error) {
+    console.error('Failed to fetch resume count:', error)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
