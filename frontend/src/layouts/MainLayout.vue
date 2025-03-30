@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <Navbar />
-    <div class="flex-1 flex">
+  <div class="h-screen flex flex-col overflow-hidden">
+    <Navbar class="flex-shrink-0" />
+    <div class="flex-1 flex overflow-hidden">
       <Sheet v-model:open="mobileMenuOpen" side="left">
         <SheetContent class="w-[240px] sm:w-[300px]" side="left">
           <div class="py-4">
@@ -24,7 +24,7 @@
         </SheetContent>
       </Sheet>
 
-      <aside class="hidden md:block w-[240px] border-r border-border h-[calc(100vh-64px)]">
+      <aside class="hidden md:block w-[240px] border-r border-border flex-shrink-0">
         <div class="py-4">
           <nav>
             <div class="space-y-1 mt-2">
@@ -43,16 +43,14 @@
         </div>
       </aside>
 
-      <main class="flex-1 p-6 overflow-auto">
+      <main class="flex-1 p-6 overflow-y-auto">
         <div class="md:hidden mb-4">
           <Button variant="outline" size="sm" @click="mobileMenuOpen = true">
             <Menu class="h-5 w-5 mr-2" />
             Menu
           </Button>
         </div>
-        <RouterView v-slot="{ Component }">
-          <component :is="Component" />
-        </RouterView>
+        <RouterView />
       </main>
     </div>
   </div>

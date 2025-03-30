@@ -66,25 +66,102 @@
                   {{ getUserInitials }}
                 </AvatarFallback>
               </Avatar>
+              <span
+                class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border border-background"
+              ></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-56 bg-slate-900 border border-slate-700" align="end">
-            <DropdownMenuLabel class="font-normal">
-              <div class="flex flex-col space-y-1">
-                <p class="text-sm font-medium leading-none text-slate-200">
-                  {{ auth.user?.first_name }} {{ auth.user?.last_name }}
-                </p>
-                <p class="text-xs leading-none text-slate-400">{{ auth.user?.username }}</p>
+          <DropdownMenuContent class="w-64 bg-slate-900 border border-slate-700" align="end">
+            <div class="p-3 border-b border-slate-700">
+              <div class="flex items-center gap-3">
+                <Avatar class="h-10 w-10 ring-1 ring-slate-700">
+                  <AvatarImage
+                    :src="auth.user?.avatar_path || ''"
+                    :alt="auth.user?.username || 'User'"
+                  />
+                  <AvatarFallback class="bg-slate-800 text-slate-200">
+                    {{ getUserInitials }}
+                  </AvatarFallback>
+                </Avatar>
+                <div class="flex flex-col space-y-0.5">
+                  <p class="text-sm font-medium leading-none text-slate-200">
+                    {{ auth.user?.first_name }} {{ auth.user?.last_name }}
+                  </p>
+                  <p class="text-xs leading-none text-slate-400">{{ auth.user?.primary_email }}</p>
+                  <div class="flex items-center mt-1">
+                    <div class="h-2 w-2 rounded-full bg-green-500 mr-1.5"></div>
+                    <span class="text-xs text-green-500">Online</span>
+                  </div>
+                </div>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator class="bg-slate-700" />
-            <DropdownMenuItem
-              @click="handleLogout"
-              class="text-red-400 focus:text-red-300 focus:bg-slate-800 cursor-pointer"
-            >
-              <LogOut class="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </DropdownMenuItem>
+            </div>
+
+            <div class="p-2">
+              <h3 class="text-xs font-medium text-slate-400 px-2 pb-1.5">Account</h3>
+              <RouterLink to="/dashboard/profile">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <User class="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+              </RouterLink>
+              <RouterLink to="/dashboard/settings">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <Settings class="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+              </RouterLink>
+              <RouterLink to="/dashboard/resumes">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <FileText class="mr-2 h-4 w-4" />
+                  <span>My Resumes</span>
+                </DropdownMenuItem>
+              </RouterLink>
+            </div>
+
+            <div class="p-2 border-t border-slate-700">
+              <h3 class="text-xs font-medium text-slate-400 px-2 pb-1.5">Career</h3>
+              <RouterLink to="/dashboard/saved-jobs">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <Briefcase class="mr-2 h-4 w-4" />
+                  <span>Saved Jobs</span>
+                </DropdownMenuItem>
+              </RouterLink>
+              <RouterLink to="/dashboard/applications">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <ClipboardCheck class="mr-2 h-4 w-4" />
+                  <span>Applications</span>
+                </DropdownMenuItem>
+              </RouterLink>
+              <RouterLink to="/dashboard/notifications">
+                <DropdownMenuItem
+                  class="cursor-pointer text-slate-200 focus:text-white focus:bg-slate-800"
+                >
+                  <Bell class="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
+                  <Badge variant="default" class="ml-auto h-5 bg-blue-600 text-white">3</Badge>
+                </DropdownMenuItem>
+              </RouterLink>
+            </div>
+
+            <div class="p-2 border-t border-slate-700">
+              <DropdownMenuItem
+                @click="handleLogout"
+                class="cursor-pointer text-red-400 focus:text-red-300 focus:bg-slate-800"
+              >
+                <LogOut class="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -99,6 +176,7 @@ import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -108,7 +186,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { Sun, Moon, Monitor, LogOut, Rocket } from 'lucide-vue-next'
+import {
+  Sun,
+  Moon,
+  Monitor,
+  LogOut,
+  Rocket,
+  User,
+  Settings,
+  FileText,
+  Briefcase,
+  ClipboardCheck,
+  Bell,
+} from 'lucide-vue-next'
 
 const auth = useAuthStore()
 const themeStore = useThemeStore()
