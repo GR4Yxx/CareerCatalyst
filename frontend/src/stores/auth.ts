@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import api from '@/lib/api'
 import type { AxiosError } from 'axios'
 import { useRouter } from 'vue-router'
+import { useProfileStore } from '@/stores/profile'
 
 interface User {
   id: string
@@ -129,6 +130,10 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     localStorage.removeItem('token')
+
+    // Reset profile store
+    const profileStore = useProfileStore()
+    profileStore.resetProfile()
 
     // Redirect to login page if requested
     if (redirect && router) {
