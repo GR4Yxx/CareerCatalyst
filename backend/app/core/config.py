@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # Gemini API settings
     GEMINI_API_KEY: str = Field(default="", env="GEMINI_API_KEY")
     
+    # CORS settings
+    FRONTEND_URL: str = Field(default="http://localhost:3000", env="FRONTEND_URL")
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True

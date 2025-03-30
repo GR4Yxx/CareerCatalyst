@@ -26,10 +26,12 @@ app = FastAPI(title="Interview Chatbot API")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Modify in production
+    allow_origins=["http://localhost:3000"],  # Use specific frontend URL
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+    expose_headers=["Content-Length"],
+    max_age=1728000,  # 20 days
 )
 
 # Mount static files directory
