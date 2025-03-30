@@ -45,6 +45,31 @@ const router = createRouter({
           component: () => import('../views/profile/ProfileView.vue'),
         },
         {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../views/profile/SettingsView.vue'),
+        },
+        {
+          path: 'resumes',
+          name: 'resumes',
+          component: () => import('../views/profile/ResumesView.vue'),
+        },
+        {
+          path: 'saved-jobs',
+          name: 'saved-jobs',
+          component: () => import('../views/profile/SavedJobsView.vue'),
+        },
+        {
+          path: 'applications',
+          name: 'applications',
+          component: () => import('../views/profile/ApplicationsView.vue'),
+        },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('../views/profile/NotificationsView.vue'),
+        },
+        {
           path: 'job-finder',
           name: 'job-finder',
           component: () => import('../views/dashboard/JobFinderView.vue'),

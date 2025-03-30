@@ -142,6 +142,22 @@
               />
             </div>
 
+            <div class="flex items-center space-x-3">
+              <Checkbox
+                id="terms"
+                v-model="formData.termsAgreed"
+                class="border-indigo-700/30 data-[state=checked]:bg-indigo-600"
+                :disabled="isLoading"
+                required
+              />
+              <Label for="terms" class="text-sm font-medium text-indigo-200">
+                I agree to the
+                <a href="#" class="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
+                and
+                <a href="#" class="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
+              </Label>
+            </div>
+
             <div
               v-if="error"
               class="p-3 bg-red-950/40 border border-red-800/30 rounded-md text-red-300 text-sm"
@@ -202,6 +218,7 @@ const formData = reactive({
   name: '',
   email: '',
   password: '',
+  termsAgreed: false,
 })
 
 const formIsValid = computed(() => {
@@ -209,7 +226,8 @@ const formIsValid = computed(() => {
     formData.name.trim() !== '' &&
     formData.email.trim() !== '' &&
     formData.password.length >= 8 &&
-    formData.password === confirmPassword.value
+    formData.password === confirmPassword.value &&
+    formData.termsAgreed
   )
 })
 
@@ -224,6 +242,11 @@ async function handleRegister() {
 
   if (formData.password.length < 8) {
     error.value = 'Password must be at least 8 characters'
+    return
+  }
+
+  if (!formData.termsAgreed) {
+    error.value = 'You must agree to the Terms of Service and Privacy Policy'
     return
   }
 
