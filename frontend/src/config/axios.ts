@@ -1,10 +1,11 @@
 // src/config/axios.ts
 import axios from 'axios'
 
-const baseURL = 'http://networkin-api.test'
+// The frontend is running on port 3000 but the API should be accessed through nginx on port 80
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost'
 
 export const api = axios.create({
-  baseURL: `${baseURL}/api`, // API requests go to /api
+  baseURL, // The API routes are already prefixed with /api in our Nginx config
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

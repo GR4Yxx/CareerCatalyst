@@ -343,6 +343,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useResumeStore } from '@/stores/resume'
+import { AxiosError } from 'axios'
 
 const resumeStore = useResumeStore()
 
@@ -404,6 +405,9 @@ async function uploadFile(file: File) {
     return
   }
 
+  // Reset any previous errors
+  resumeStore.error = null
+
   // Simulate upload progress
   uploadProgress.value = 0
   const interval = setInterval(() => {
@@ -414,8 +418,19 @@ async function uploadFile(file: File) {
   }, 100)
 
   try {
-    await resumeStore.uploadResume(file)
+    const newResume = await resumeStore.uploadResume(file)
     uploadProgress.value = 100
+
+    if (!newResume) {
+      // If resumeStore.uploadResume returns null, there was an error
+      clearInterval(interval)
+      uploadProgress.value = 0
+      alert('Failed to upload resume. Please try again.')
+      return
+    }
+
+    // Display success message
+    alert('Resume uploaded successfully!')
 
     // Fetch versions if the upload was successful
     if (resumeStore.masterResume) {
@@ -425,9 +440,23 @@ async function uploadFile(file: File) {
     setTimeout(() => {
       uploadProgress.value = 0
     }, 1000)
-  } catch (err) {
-    console.error('Upload failed:', err)
+  } catch (err: unknown) {
+    clearInterval(interval)
     uploadProgress.value = 0
+
+    // Log the error to the console for debugging
+    console.error('Upload failed:', err)
+
+    let errorMessage = 'Failed to upload resume. Please try again later.'
+
+    // Extract more specific error message if available
+    if (err instanceof AxiosError && err.response?.data?.detail) {
+      errorMessage = `Upload failed: ${err.response.data.detail}`
+    } else if (err instanceof Error) {
+      errorMessage = `Upload failed: ${err.message}`
+    }
+
+    alert(errorMessage)
   }
 }
 

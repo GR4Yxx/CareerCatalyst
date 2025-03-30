@@ -1,4 +1,5 @@
-import axios from 'axios'
+import { api as axios } from '@/config/axios'
+import { AxiosError } from 'axios'
 
 interface Resume {
   _id: string
@@ -35,8 +36,8 @@ class ResumeService {
     try {
       const response = await axios.get('/resumes/user/current')
       return response.data
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
+    } catch (error: unknown) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
         return null
       }
       throw error
@@ -58,8 +59,8 @@ class ResumeService {
     try {
       const response = await axios.get(`/resumes/profile/${profileId}/current`)
       return response.data
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
+    } catch (error: unknown) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
         return null
       }
       throw error

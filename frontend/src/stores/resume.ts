@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { resumeService, type Resume, type ResumeWithVersions } from '@/services/resumeService'
+import { AxiosError } from 'axios'
 
 export const useResumeStore = defineStore('resume', () => {
   const masterResume = ref<Resume | null>(null)
@@ -92,9 +93,19 @@ export const useResumeStore = defineStore('resume', () => {
       await fetchAllResumes()
 
       return newResume
-    } catch (err) {
-      error.value = 'Failed to upload resume'
-      console.error(err)
+    } catch (err: unknown) {
+      // Log the original error
+      console.error('Failed to upload resume:', err)
+
+      // Set a more descriptive error message
+      if (err instanceof AxiosError && err.response?.data?.detail) {
+        error.value = `Upload failed: ${err.response.data.detail}`
+      } else if (err instanceof Error) {
+        error.value = `Upload failed: ${err.message}`
+      } else {
+        error.value = 'Failed to upload resume - please check your network connection and try again'
+      }
+
       return null
     } finally {
       loading.value = false

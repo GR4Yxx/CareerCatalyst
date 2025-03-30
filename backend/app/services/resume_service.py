@@ -140,7 +140,20 @@ async def get_resumes_by_profile(profile_id: str) -> List[Resume]:
     cursor = resumes_collection.find({"profile_id": ObjectId(profile_id)}).sort("created_at", -1)
     resumes = await cursor.to_list(length=None)
     
-    return [Resume(**resume) for resume in resumes]
+    # Convert ObjectId fields to strings before passing to Resume model
+    formatted_resumes = []
+    for resume in resumes:
+        # Manual conversion of MongoDB ObjectIds to strings
+        if "_id" in resume and isinstance(resume["_id"], ObjectId):
+            resume["_id"] = str(resume["_id"])
+        if "user_id" in resume and isinstance(resume["user_id"], ObjectId):
+            resume["user_id"] = str(resume["user_id"])
+        if "profile_id" in resume and isinstance(resume["profile_id"], ObjectId):
+            resume["profile_id"] = str(resume["profile_id"])
+        
+        formatted_resumes.append(Resume(**resume))
+    
+    return formatted_resumes
 
 async def get_resumes_by_user(user_id: str) -> List[Resume]:
     """
@@ -152,7 +165,20 @@ async def get_resumes_by_user(user_id: str) -> List[Resume]:
     cursor = resumes_collection.find({"user_id": ObjectId(user_id)}).sort("created_at", -1)
     resumes = await cursor.to_list(length=None)
     
-    return [Resume(**resume) for resume in resumes]
+    # Convert ObjectId fields to strings before passing to Resume model
+    formatted_resumes = []
+    for resume in resumes:
+        # Manual conversion of MongoDB ObjectIds to strings
+        if "_id" in resume and isinstance(resume["_id"], ObjectId):
+            resume["_id"] = str(resume["_id"])
+        if "user_id" in resume and isinstance(resume["user_id"], ObjectId):
+            resume["user_id"] = str(resume["user_id"])
+        if "profile_id" in resume and isinstance(resume["profile_id"], ObjectId):
+            resume["profile_id"] = str(resume["profile_id"])
+        
+        formatted_resumes.append(Resume(**resume))
+    
+    return formatted_resumes
 
 async def delete_resume(resume_id: str) -> bool:
     """
