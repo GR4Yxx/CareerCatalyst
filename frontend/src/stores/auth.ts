@@ -1,104 +1,148 @@
 import { defineStore } from 'pinia'
-import api, { csrf } from '@/config/axios'
+import { ref, computed } from 'vue'
+import api from '@/lib/api'
 import type { AxiosError } from 'axios'
+import { useRouter } from 'vue-router'
 
 interface User {
-  id: number
-  username: string
-  first_name?: string
-  last_name?: string
-  primary_email: string
-  email_verified_at?: Date
-  password: string
-  remember_token?: string
-  avatar_path?: string
-  phone?: string
-  bio?: string
-  role: 'regular' | 'organizer' | 'admin'
-  company_name?: string
-  company_logo_path?: string
-  preferred_timezone?: string
-  subscription_plan?: string
-  subscription_ends_at?: Date
-  last_login_at?: Date
-  is_active: boolean
-  two_factor_enabled: boolean
-  two_factor_secret?: string
-  created_at: Date
-  updated_at: Date
-  deleted_at?: Date
+  id: string
+  email: string
+  name: string
+  created_at: string
+  updated_at: string
 }
 
-interface LoginCredentials {
+interface LoginPayload {
+  username: string
+  password: string
+}
+
+interface RegisterPayload {
+  name: string
   email: string
   password: string
-  remember?: boolean
 }
 
-interface AuthState {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-}
+export const useAuthStore = defineStore('auth', () => {
+  const router = useRouter()
+  const token = ref<string | null>(localStorage.getItem('token'))
+  const user = ref<User | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
-export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => ({
-    user: {
-      id: 1,
-      username: 'testuser',
-      primary_email: 'test@example.com',
-      password: '',
-      role: 'regular',
-      is_active: true,
-      two_factor_enabled: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-    },
-    token: 'dummy-token',
-    isAuthenticated: true,
-  }),
+  // Computed property to check if the user is authenticated
+  const isAuthenticated = computed(() => !!token.value)
 
-  getters: {
-    currentUser: (state) => state.user,
-    isLoggedIn: (state) => true,
-  },
+  // Initialize auth state
+  function init() {
+    const storedToken = localStorage.getItem('token')
+    if (storedToken) {
+      token.value = storedToken
+      fetchUserData()
+    }
+  }
 
-  actions: {
-    async login(credentials: LoginCredentials) {
-      // Simply return success without making any API calls
-      return { user: this.user, token: this.token }
-    },
+  // Login function
+  async function login(credentials: LoginPayload): Promise<boolean> {
+    loading.value = true
+    error.value = null
 
-    async logout() {
-      // Do nothing - keep the user logged in
+    try {
+      // Convert credentials to form data for OAuth2 password flow
+      const formData = new URLSearchParams()
+      formData.append('username', credentials.username)
+      formData.append('password', credentials.password)
+
+      const response = await api.post('/api/auth/login', formData.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+
+      const { access_token } = response.data
+
+      if (access_token) {
+        // Store token in localStorage and state
+        localStorage.setItem('token', access_token)
+        token.value = access_token
+
+        // Fetch user data
+        await fetchUserData()
+        return true
+      }
+
+      error.value = 'Invalid response from server'
+      return false
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail: string }>
+      error.value = axiosError.response?.data?.detail || 'An error occurred during login'
+      console.error('Login error:', err)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Register function
+  async function register(userData: RegisterPayload): Promise<boolean> {
+    loading.value = true
+    error.value = null
+
+    try {
+      await api.post('/api/auth/register', userData)
       return true
-    },
+    } catch (err) {
+      const axiosError = err as AxiosError<{ detail: string }>
+      error.value = axiosError.response?.data?.detail || 'An error occurred during registration'
+      console.error('Registration error:', err)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
 
-    register: async (userData: {
-      username: string
-      first_name: string
-      last_name: string
-      primary_email: string
-      password: string
-      password_confirmation: string
-      role: 'regular' | 'organizer' | 'admin'
-    }) => {
-      // Simply return success without making any API calls
-      return { success: true }
-    },
+  // Fetch user data
+  async function fetchUserData(): Promise<void> {
+    if (!token.value) return
 
-    clearAuth() {
-      // Do nothing - keep the user logged in
-    },
+    loading.value = true
+    error.value = null
 
-    async checkAuth() {
-      // Always return true
-      return true
-    },
+    try {
+      const response = await api.get('/api/auth/me')
+      user.value = response.data
+    } catch (err) {
+      console.error('Error fetching user data:', err)
+      logout()
+    } finally {
+      loading.value = false
+    }
+  }
 
-    async refreshUserData() {
-      // Do nothing - keep using the mock user data
-      return true
-    },
-  },
+  // Logout function
+  function logout(): void {
+    token.value = null
+    user.value = null
+    localStorage.removeItem('token')
+
+    // Redirect to login page
+    if (router) {
+      router.push('/login')
+    }
+  }
+
+  // Call init to set up auth state
+  init()
+
+  return {
+    token,
+    user,
+    loading,
+    error,
+    isAuthenticated,
+    login,
+    register,
+    fetchUserData,
+    logout,
+  }
 })

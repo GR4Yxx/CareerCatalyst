@@ -191,30 +191,18 @@ async function handleLogin() {
   isLoading.value = true
   try {
     await auth.login({
-      email: email.value,
+      username: email.value, // FastAPI expects username field
       password: password.value,
-      remember: rememberMe.value,
     })
 
-    toast({
-      title: 'Success',
-      description: 'Welcome back! You have successfully logged in.',
-    })
+    // Removed toast for successful login since we're having issues
+    // We'll let the redirect handle the success notification
 
-    // Redirect based on user role
-    switch (auth.user?.role) {
-      case 'admin':
-        router.push('/admin')
-        break
-      case 'organizer':
-        router.push('/organizer')
-        break
-      default:
-        router.push('/dashboard')
-    }
+    // Redirect to dashboard after login
+    router.push('/dashboard')
   } catch (error) {
-    const axiosError = error as AxiosError<{ message: string }>
-    const errorMessage = axiosError.response?.data?.message || 'An error occurred during login'
+    const axiosError = error as AxiosError<{ detail: string }>
+    const errorMessage = axiosError.response?.data?.detail || 'Invalid email or password'
 
     toast({
       variant: 'destructive',

@@ -58,10 +58,6 @@
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" class="relative h-9 w-9 rounded-full ml-1">
               <Avatar class="h-8 w-8 ring-1 ring-slate-700">
-                <AvatarImage
-                  :src="auth.user?.avatar_path || ''"
-                  :alt="auth.user?.username || 'User'"
-                />
                 <AvatarFallback class="bg-slate-800 text-slate-200">
                   {{ getUserInitials }}
                 </AvatarFallback>
@@ -75,19 +71,15 @@
             <div class="p-3 border-b border-slate-700">
               <div class="flex items-center gap-3">
                 <Avatar class="h-10 w-10 ring-1 ring-slate-700">
-                  <AvatarImage
-                    :src="auth.user?.avatar_path || ''"
-                    :alt="auth.user?.username || 'User'"
-                  />
                   <AvatarFallback class="bg-slate-800 text-slate-200">
                     {{ getUserInitials }}
                   </AvatarFallback>
                 </Avatar>
                 <div class="flex flex-col space-y-0.5">
                   <p class="text-sm font-medium leading-none text-slate-200">
-                    {{ auth.user?.first_name }} {{ auth.user?.last_name }}
+                    {{ auth.user?.name }}
                   </p>
-                  <p class="text-xs leading-none text-slate-400">{{ auth.user?.primary_email }}</p>
+                  <p class="text-xs leading-none text-slate-400">{{ auth.user?.email }}</p>
                   <div class="flex items-center mt-1">
                     <div class="h-2 w-2 rounded-full bg-green-500 mr-1.5"></div>
                     <span class="text-xs text-green-500">Online</span>
@@ -211,12 +203,18 @@ const currentTheme = computed(() => themeStore.theme)
 const getUserInitials = computed(() => {
   if (!auth.user) return 'U'
 
-  const first = auth.user.first_name?.[0] || ''
-  const last = auth.user.last_name?.[0] || ''
+  if (auth.user.name) {
+    const nameParts = auth.user.name.split(' ')
+    if (nameParts.length > 1) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase()
+    }
+    return nameParts[0][0].toUpperCase()
+  }
 
-  if (first && last) return `${first}${last}`
-  if (first) return first
-  if (auth.user.username) return auth.user.username[0].toUpperCase()
+  if (auth.user.email) {
+    return auth.user.email[0].toUpperCase()
+  }
+
   return 'U'
 })
 
