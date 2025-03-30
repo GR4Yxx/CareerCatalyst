@@ -39,18 +39,44 @@ export const useResumeStore = defineStore('resume', () => {
     error.value = null
 
     try {
+      console.log('Fetching all resumes from the store...')
       allResumes.value = await resumeService.getUserResumes()
+
+      console.log('Fetch result:', allResumes.value)
+
       // Set the master resume as the current one
       if (Array.isArray(allResumes.value) && allResumes.value.length > 0) {
-        masterResume.value = allResumes.value.find((resume) => resume.is_current) || null
+        console.log('Setting master resume from', allResumes.value.length, 'resumes')
+        masterResume.value =
+          allResumes.value.find((resume) => resume.is_current) || allResumes.value[0]
+        console.log(
+          'Master resume set:',
+          masterResume.value ? masterResume.value.original_filename : 'none',
+        )
       } else {
+        console.log('No resumes found, setting master resume to null')
         masterResume.value = null
         allResumes.value = []
       }
       return allResumes.value
     } catch (err) {
-      error.value = 'Failed to load resumes'
-      console.error(err)
+      const errorMessage = 'Failed to load resumes'
+      console.error(errorMessage, err)
+
+      // Show a more descriptive error to the user
+      if (err instanceof AxiosError) {
+        if (err.code === 'CORS_ERROR' || err.message.includes('Network Error')) {
+          error.value =
+            'CORS or network error - please check your connection and CORS configuration'
+        } else if (err.response) {
+          error.value = `${errorMessage}: Server returned ${err.response.status} ${err.response.statusText}`
+        } else {
+          error.value = `${errorMessage}: ${err.message}`
+        }
+      } else {
+        error.value = errorMessage
+      }
+
       allResumes.value = []
       masterResume.value = null
       return []

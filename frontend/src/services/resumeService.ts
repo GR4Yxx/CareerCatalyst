@@ -1,4 +1,4 @@
-import { api as axios } from '@/config/axios'
+import api from '@/lib/api'
 import { AxiosError } from 'axios'
 
 interface Resume {
@@ -34,7 +34,7 @@ class ResumeService {
    */
   async getCurrentUserResume(): Promise<Resume | null> {
     try {
-      const response = await axios.get('/resumes/user/current')
+      const response = await api.get('/resumes/user/current')
       return response.data
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response?.status === 404) {
@@ -48,8 +48,37 @@ class ResumeService {
    * Get all resumes for the logged-in user
    */
   async getUserResumes(): Promise<Resume[]> {
-    const response = await axios.get('/resumes/user')
-    return response.data
+    try {
+      console.log('Fetching user resumes...')
+      const response = await api.get('/resumes/user', {
+        headers: {
+          // Ensure content-type is set correctly for GET request
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      })
+      console.log('User resumes fetch successful:', response.data)
+      return response.data
+    } catch (error: unknown) {
+      // Enhanced error logging for debugging
+      if (error instanceof AxiosError) {
+        console.error('Error fetching user resumes:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          headers: error.response?.headers,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            headers: error.config?.headers,
+          },
+        })
+      } else {
+        console.error('Unknown error fetching resumes:', error)
+      }
+      // Return empty array instead of throwing to avoid breaking the UI
+      return []
+    }
   }
 
   /**
@@ -57,7 +86,7 @@ class ResumeService {
    */
   async getCurrentResume(profileId: string): Promise<Resume | null> {
     try {
-      const response = await axios.get(`/resumes/profile/${profileId}/current`)
+      const response = await api.get(`/resumes/profile/${profileId}/current`)
       return response.data
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response?.status === 404) {
@@ -71,7 +100,7 @@ class ResumeService {
    * Get all resumes for a profile
    */
   async getResumes(profileId: string): Promise<Resume[]> {
-    const response = await axios.get(`/resumes/profile/${profileId}`)
+    const response = await api.get(`/resumes/profile/${profileId}`)
     return response.data
   }
 
@@ -79,7 +108,7 @@ class ResumeService {
    * Get a resume with all its versions
    */
   async getResumeWithVersions(resumeId: string): Promise<ResumeWithVersions> {
-    const response = await axios.get(`/resumes/${resumeId}`)
+    const response = await api.get(`/resumes/${resumeId}`)
     return response.data
   }
 
@@ -94,7 +123,7 @@ class ResumeService {
       formData.append('profile_id', profileId)
     }
 
-    const response = await axios.post('/resumes/upload', formData, {
+    const response = await api.post('/resumes/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -107,14 +136,14 @@ class ResumeService {
    * Delete a resume
    */
   async deleteResume(resumeId: string): Promise<void> {
-    await axios.delete(`/resumes/${resumeId}`)
+    await api.delete(`/resumes/${resumeId}`)
   }
 
   /**
    * Download a resume file
    */
   async downloadResume(resumeId: string): Promise<Blob> {
-    const response = await axios.get(`/resumes/${resumeId}/download`, {
+    const response = await api.get(`/resumes/${resumeId}/download`, {
       responseType: 'blob',
     })
     return response.data
@@ -129,7 +158,7 @@ class ResumeService {
     optimizedContent: Record<string, any>,
     versionName?: string,
   ): Promise<ResumeVersion> {
-    const response = await axios.post(`/resumes/${resumeId}/versions`, {
+    const response = await api.post(`/resumes/${resumeId}/versions`, {
       job_id: jobId,
       optimized_content: optimizedContent,
       version_name: versionName,

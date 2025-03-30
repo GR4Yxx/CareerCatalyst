@@ -5,7 +5,7 @@ import axios from 'axios'
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost'
 
 export const api = axios.create({
-  baseURL, // The API routes are already prefixed with /api in our Nginx config
+  baseURL, // The API routes are already prefixed with /api in our Nginx config or .env
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
