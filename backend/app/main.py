@@ -39,7 +39,7 @@ async def shutdown_db_client():
     await close_mongo_connection()
 
 # Include API router
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
 
 # Global exception handler
 @app.exception_handler(Exception)
