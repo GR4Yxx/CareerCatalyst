@@ -98,32 +98,39 @@ async def analyze_skills_with_gemini(
     Returns:
         SkillAnalysisResult containing the extracted skills by category
     """
-    if not GEMINI_AVAILABLE:
-        logger.warning("Gemini API not available. Using basic skill extraction.")
+    # Always reload the Gemini API key from environment
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    
+    if not gemini_api_key:
+        logger.warning("GEMINI_API_KEY not found in environment. Using basic skill extraction.")
         return await basic_skill_extraction(resume_text)
     
+    # Debug log the API key (partial)
+    logger.info(f"Using Gemini API key: {gemini_api_key[:4]}...{gemini_api_key[-4:]}")
+    
     try:
-        # Ensure API key is set
-        gemini_api_key = os.getenv("GEMINI_API_KEY")
-        if not gemini_api_key:
-            logger.warning("GEMINI_API_KEY not found in environment. Using basic skill extraction.")
-            return await basic_skill_extraction(resume_text)
-            
-        # Reconfigure with the API key to ensure it's using the latest
+        # Import here to ensure it's loaded when needed
+        import google.generativeai as genai
+        
+        # Always reconfigure with the current API key
         genai.configure(api_key=gemini_api_key)
+        logger.info("Gemini API configured successfully")
             
         # Configure Gemini model - use gemini-1.5-pro if available, fall back to gemini-pro
         try:
+            logger.info("Attempting to use gemini-1.5-pro model")
             model = genai.GenerativeModel('gemini-1.5-pro')
         except Exception as e:
             logger.warning(f"Error with gemini-1.5-pro model: {str(e)}. Trying gemini-pro...")
             try:
+                logger.info("Attempting to use gemini-pro model")
                 model = genai.GenerativeModel('gemini-pro')
             except Exception as e:
                 logger.error(f"Error with gemini-pro model: {str(e)}. Falling back to basic extraction.")
                 return await basic_skill_extraction(resume_text)
         
         # Create prompt for skill extraction
+        logger.info("Creating prompt for Gemini")
         prompt = f"""
         You are an expert resume analyzer focused on extracting and categorizing professional skills.
         
@@ -159,6 +166,7 @@ async def analyze_skills_with_gemini(
         
         # Get response from Gemini
         try:
+            logger.info("Sending request to Gemini API")
             response = model.generate_content(prompt)
             logger.info("Successfully got response from Gemini")
         except Exception as e:
@@ -296,6 +304,12 @@ async def basic_skill_extraction(resume_text: str) -> SkillAnalysisResult:
     
     return result
 
+def ensure_string_id(value):
+    """Helper function to convert ObjectId to string if needed"""
+    if isinstance(value, ObjectId):
+        return str(value)
+    return value
+
 async def analyze_resume_skills(
     resume_id: str,
     file_content: bytes,
@@ -318,49 +332,77 @@ async def analyze_resume_skills(
         UserSkill object containing the extracted skills
     """
     # Extract text from file
-    resume_text = await extract_text_from_file(file_content, file_type)
+    try:
+        resume_text = await extract_text_from_file(file_content, file_type)
+    except Exception as e:
+        logger.error(f"Error extracting text from resume {resume_id}: {str(e)}")
+        raise ValueError(f"Failed to extract text from resume: {str(e)}")
     
     if not resume_text.strip():
-        logger.error(f"Failed to extract text from resume {resume_id}")
-        return UserSkill(
-            resume_id=resume_id,
-            user_id=user_id,
-            profile_id=profile_id,
-            skills=[]
-        )
+        logger.error(f"Failed to extract text from resume {resume_id} - extracted text is empty")
+        raise ValueError("Could not extract any text from the resume. Make sure the file is not corrupted or password protected.")
     
     # Analyze skills using Gemini
-    skill_analysis = await analyze_skills_with_gemini(resume_text)
+    try:
+        skill_analysis = await analyze_skills_with_gemini(resume_text)
+        
+        if not skill_analysis or not any([
+            skill_analysis.technical_skills,
+            skill_analysis.soft_skills,
+            skill_analysis.domain_knowledge,
+            skill_analysis.certifications
+        ]):
+            logger.warning(f"No skills found in resume {resume_id}")
+    except Exception as e:
+        logger.error(f"Error in skill analysis for resume {resume_id}: {str(e)}")
+        raise ValueError(f"Skill analysis failed: {str(e)}")
+    
+    # Ensure IDs are strings
+    user_id_str = ensure_string_id(user_id) if user_id else None
+    profile_id_str = ensure_string_id(profile_id) if profile_id else None
+    resume_id_str = ensure_string_id(resume_id)
     
     # Create UserSkill object
     user_skill = UserSkill(
-        resume_id=resume_id,
-        user_id=user_id,
-        profile_id=profile_id,
+        resume_id=resume_id_str,
+        user_id=user_id_str,
+        profile_id=profile_id_str,
         skills=skill_analysis.all_skills()
     )
     
     # Store in database
-    db = get_database()
-    user_skills_collection = db["user_skills"]
-    
-    # Convert model to dict
-    user_skill_dict = user_skill.model_dump(exclude={"id"})
-    
-    # Convert string IDs to ObjectIds
-    if user_id:
-        user_skill_dict["user_id"] = ObjectId(user_id)
-    if profile_id:
-        user_skill_dict["profile_id"] = ObjectId(profile_id)
-    
-    user_skill_dict["resume_id"] = ObjectId(resume_id)
-    
-    # Insert into database
-    result = await user_skills_collection.insert_one(user_skill_dict)
-    
-    # Update the ID and return
-    user_skill.id = str(result.inserted_id)
-    return user_skill
+    try:
+        db = get_database()
+        user_skills_collection = db["user_skills"]
+        
+        # Check for existing skills and remove them
+        await user_skills_collection.delete_many({"resume_id": ObjectId(resume_id)})
+        
+        # Convert model to dict
+        user_skill_dict = user_skill.model_dump(exclude={"id"})
+        
+        # Convert string IDs to ObjectIds for database storage
+        if user_id:
+            user_skill_dict["user_id"] = ObjectId(user_id)
+        if profile_id:
+            user_skill_dict["profile_id"] = ObjectId(profile_id)
+        
+        user_skill_dict["resume_id"] = ObjectId(resume_id)
+        
+        # Insert into database
+        result = await user_skills_collection.insert_one(user_skill_dict)
+        
+        # Update the ID and return
+        user_skill.id = str(result.inserted_id)
+        
+        # Log success
+        skill_count = len(user_skill.skills)
+        logger.info(f"Successfully analyzed resume {resume_id} and found {skill_count} skills")
+        
+        return user_skill
+    except Exception as e:
+        logger.error(f"Database error during skill storage for resume {resume_id}: {str(e)}")
+        raise ValueError(f"Failed to store skills in database: {str(e)}")
 
 async def get_skills_by_resume(resume_id: str) -> Optional[UserSkill]:
     """

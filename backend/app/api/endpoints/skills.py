@@ -39,37 +39,57 @@ async def analyze_resume_skills(
     Manually trigger skill analysis for a resume.
     """
     # Check if the resume exists and belongs to the user
-    resume = await resume_service.get_resume_by_id(resume_id)
-    
-    if not resume:
+    try:
+        resume = await resume_service.get_resume_by_id(resume_id)
+        
+        if not resume:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Resume not found."
+            )
+        
+        # Get the resume file content
+        file_data = await resume_service.download_resume(resume_id)
+        
+        if not file_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Resume file not found."
+            )
+        
+        # Determine if linked to profile or user
+        profile_id = getattr(resume, "profile_id", None)
+        user_id = getattr(resume, "user_id", None) or current_user.id
+        
+        # Run skill analysis
+        try:
+            user_skill = await skill_service.analyze_resume_skills(
+                resume_id=resume_id,
+                file_content=file_data["content"],
+                file_type=file_data["file_type"],
+                profile_id=profile_id,
+                user_id=user_id
+            )
+            
+            return user_skill
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(e)
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred during skill analysis: {str(e)}"
+            )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resume not found."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
         )
-    
-    # Get the resume file content
-    file_data = await resume_service.download_resume(resume_id)
-    
-    if not file_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resume file not found."
-        )
-    
-    # Determine if linked to profile or user
-    profile_id = getattr(resume, "profile_id", None)
-    user_id = getattr(resume, "user_id", None) or current_user.id
-    
-    # Run skill analysis
-    user_skill = await skill_service.analyze_resume_skills(
-        resume_id=resume_id,
-        file_content=file_data["content"],
-        file_type=file_data["file_type"],
-        profile_id=profile_id,
-        user_id=user_id
-    )
-    
-    return user_skill
 
 @router.get("/user", response_model=List[UserSkill])
 async def get_user_skills(

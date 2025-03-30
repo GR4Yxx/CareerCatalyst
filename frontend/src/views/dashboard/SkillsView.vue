@@ -5,10 +5,12 @@
       Skills Intelligence
     </h1>
 
-    <div v-if="loading" class="flex justify-center my-8">
+    <!-- Main loading indicator -->
+    <div v-if="loading" class="flex flex-col items-center justify-center my-8 space-y-4">
       <div class="animate-spin h-8 w-8 text-primary">
         <Loader2 />
       </div>
+      <p class="text-muted-foreground">Loading your skills data...</p>
     </div>
 
     <div v-else>
@@ -35,27 +37,48 @@
 
             <div class="flex gap-4 mt-4">
               <Button
-                v-if="!userSkills || userSkills.skills.length === 0"
+                v-if="!userSkills || !userSkills.skills || userSkills.skills.length === 0"
                 @click="analyzeResume"
                 :disabled="analyzing"
+                class="relative"
               >
-                {{ analyzing ? 'Analyzing...' : 'Analyze Skills' }}
+                <div v-if="analyzing" class="flex items-center">
+                  <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+                  <span>Analyzing...</span>
+                </div>
+                <span v-else>Analyze Skills</span>
               </Button>
               <Button
-                v-if="userSkills && userSkills.skills.length > 0"
+                v-if="userSkills && userSkills.skills && userSkills.skills.length > 0"
                 @click="analyzeResume"
                 variant="outline"
                 :disabled="analyzing"
+                class="relative"
               >
-                {{ analyzing ? 'Analyzing...' : 'Re-analyze Skills' }}
+                <div v-if="analyzing" class="flex items-center">
+                  <Loader2 class="h-4 w-4 mr-2 animate-spin" />
+                  <span>Analyzing...</span>
+                </div>
+                <span v-else>Re-analyze Skills</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Analysis in progress indicator -->
+      <div v-if="analyzing" class="my-6 p-4 bg-muted rounded-lg border flex items-center">
+        <Loader2 class="h-5 w-5 mr-3 animate-spin text-primary" />
+        <div>
+          <p class="font-medium">AI Analysis in Progress</p>
+          <p class="text-sm text-muted-foreground">
+            Our AI is analyzing your resume. This may take up to a minute...
+          </p>
+        </div>
+      </div>
+
       <!-- Skills Display Section -->
-      <div v-if="userSkills && userSkills.skills.length > 0">
+      <div v-if="userSkills && userSkills.skills && userSkills.skills.length > 0">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Technical Skills -->
           <div class="p-6 bg-card rounded-lg border shadow-sm">
@@ -136,7 +159,9 @@
 
       <!-- No Skills Yet Message -->
       <div
-        v-else-if="currentResume && (!userSkills || userSkills.skills.length === 0)"
+        v-else-if="
+          currentResume && (!userSkills || !userSkills.skills || userSkills.skills.length === 0)
+        "
         class="p-6 bg-card rounded-lg border shadow-sm mt-6"
       >
         <h3 class="text-lg font-semibold mb-3">No Skills Analyzed Yet</h3>
@@ -164,7 +189,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/components/ui/toast/use-toast'
-import axios from 'axios'
+import api from '@/lib/api'
 
 interface Skill {
   id?: string
@@ -200,31 +225,34 @@ const { toast } = useToast()
 const loading = ref(true)
 const analyzing = ref(false)
 const currentResume = ref<Resume | null>(null)
+const currentResumeLoading = ref(false)
 const userSkills = ref<UserSkill | null>(null)
+const userSkillsLoading = ref(false)
+const error = ref<string | null>(null)
 
 const technicalSkills = computed(() => {
-  if (!userSkills.value) return []
+  if (!userSkills.value || !userSkills.value.skills) return []
   return userSkills.value.skills
     .filter((skill) => skill.category === 'technical')
     .sort((a, b) => b.confidence - a.confidence)
 })
 
 const softSkills = computed(() => {
-  if (!userSkills.value) return []
+  if (!userSkills.value || !userSkills.value.skills) return []
   return userSkills.value.skills
     .filter((skill) => skill.category === 'soft')
     .sort((a, b) => b.confidence - a.confidence)
 })
 
 const domainSkills = computed(() => {
-  if (!userSkills.value) return []
+  if (!userSkills.value || !userSkills.value.skills) return []
   return userSkills.value.skills
     .filter((skill) => skill.category === 'domain')
     .sort((a, b) => b.confidence - a.confidence)
 })
 
 const certifications = computed(() => {
-  if (!userSkills.value) return []
+  if (!userSkills.value || !userSkills.value.skills) return []
   return userSkills.value.skills
     .filter((skill) => skill.category === 'certification')
     .sort((a, b) => b.confidence - a.confidence)
@@ -238,28 +266,66 @@ const getConfidenceClass = (confidence: number) => {
 }
 
 const fetchCurrentResume = async () => {
+  currentResumeLoading.value = true
+
   try {
-    const response = await axios.get('/api/resumes/user/current')
-    currentResume.value = response.data
-  } catch (error: any) {
-    if (error.response?.status !== 404) {
-      console.error('Error fetching current resume:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch current resume',
-        variant: 'destructive',
-      })
+    console.log('Fetching current resume...')
+    const response = await api.get('/resumes/user/current')
+    console.log('Current resume raw response:', response.data)
+
+    if (response.data) {
+      // Handle various ID formats
+      if (response.data.id) {
+        currentResume.value = response.data
+        console.log('Current resume set with ID:', currentResume.value.id)
+        return true
+      } else if (response.data._id) {
+        // Handle MongoDB ObjectId format
+        currentResume.value = {
+          ...response.data,
+          id: response.data._id,
+        }
+        console.log('Current resume ID fixed from _id:', currentResume.value.id)
+        return true
+      } else if (response.data.file_id) {
+        // Handle case where we have file_id instead
+        currentResume.value = {
+          ...response.data,
+          id: response.data.file_id,
+        }
+        console.log('Current resume ID fixed from file_id:', currentResume.value.id)
+        return true
+      } else {
+        console.warn('Resume found but has no valid ID')
+        return false
+      }
+    } else {
+      console.warn('No current resume found')
+      return false
     }
+  } catch (err) {
+    console.error('Error fetching current resume:', err)
+    return false
+  } finally {
+    currentResumeLoading.value = false
   }
 }
 
 const fetchUserSkills = async () => {
-  if (!currentResume.value) return
+  if (!currentResume.value || !currentResume.value.id) {
+    console.warn('Cannot fetch skills: no valid resume ID')
+    return false
+  }
+
+  userSkillsLoading.value = true
 
   try {
-    const response = await axios.get(`/api/skills/resume/${currentResume.value.id}`)
+    console.log(`Fetching skills for resume ID: ${currentResume.value.id}`)
+    const response = await api.get(`/skills/resume/${currentResume.value.id}`)
+    console.log('Skills response:', response.data)
     userSkills.value = response.data
-  } catch (error: any) {
+    return true
+  } catch (error) {
     if (error.response?.status !== 404) {
       console.error('Error fetching skills:', error)
       toast({
@@ -268,16 +334,30 @@ const fetchUserSkills = async () => {
         variant: 'destructive',
       })
     }
+    return false
+  } finally {
+    userSkillsLoading.value = false
   }
 }
 
 const analyzeResume = async () => {
-  if (!currentResume.value) return
+  if (!currentResume.value || !currentResume.value.id) {
+    console.warn('Cannot analyze resume: no valid resume ID')
+    toast({
+      title: 'Error',
+      description: 'No resume available for analysis',
+      variant: 'destructive',
+    })
+    return
+  }
 
   analyzing.value = true
+  error.value = null
 
   try {
-    const response = await axios.post(`/api/skills/analyze/${currentResume.value.id}`)
+    console.log(`Analyzing resume with ID: ${currentResume.value.id}`)
+    const response = await api.post(`/skills/analyze/${currentResume.value.id}`)
+    console.log('Analysis response:', response.data)
     userSkills.value = response.data
 
     toast({
@@ -287,9 +367,10 @@ const analyzeResume = async () => {
     })
   } catch (error) {
     console.error('Error analyzing skills:', error)
+    error.value = error.response?.data?.detail || 'Failed to analyze resume skills'
     toast({
       title: 'Error',
-      description: 'Failed to analyze resume skills',
+      description: error.value,
       variant: 'destructive',
     })
   } finally {
@@ -304,10 +385,18 @@ const navigateToResumes = () => {
 onMounted(async () => {
   loading.value = true
   try {
-    await fetchCurrentResume()
-    if (currentResume.value) {
+    const resumeLoaded = await fetchCurrentResume()
+    if (resumeLoaded && currentResume.value) {
       await fetchUserSkills()
     }
+  } catch (err) {
+    console.error('Error during component initialization:', err)
+    error.value = 'Failed to load skill data'
+    toast({
+      title: 'Error',
+      description: 'Failed to load skill data',
+      variant: 'destructive',
+    })
   } finally {
     loading.value = false
   }
