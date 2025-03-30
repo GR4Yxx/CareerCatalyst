@@ -5,9 +5,24 @@ from bson import ObjectId
 from .user import PyObjectId
 
 class ResumeBase(BaseModel):
-    profile_id: PyObjectId
+    profile_id: Optional[PyObjectId] = None
+    user_id: Optional[PyObjectId] = None
     original_filename: str
     file_type: str
+
+    model_config = {
+        "json_encoders": {ObjectId: str},
+        "populate_by_name": True,
+        "arbitrary_types_allowed": True
+    }
+
+    @field_serializer('profile_id')
+    def serialize_profile_id(self, profile_id: Optional[PyObjectId]) -> Optional[str]:
+        return str(profile_id) if profile_id else None
+        
+    @field_serializer('user_id')
+    def serialize_user_id(self, user_id: Optional[PyObjectId]) -> Optional[str]:
+        return str(user_id) if user_id else None
 
 
 class ResumeCreate(ResumeBase):
@@ -32,8 +47,12 @@ class ResumeInDB(ResumeBase):
         return str(id)
     
     @field_serializer('profile_id')
-    def serialize_profile_id(self, profile_id: PyObjectId) -> str:
-        return str(profile_id)
+    def serialize_profile_id(self, profile_id: Optional[PyObjectId]) -> Optional[str]:
+        return str(profile_id) if profile_id else None
+
+    @field_serializer('user_id')
+    def serialize_user_id(self, user_id: Optional[PyObjectId]) -> Optional[str]:
+        return str(user_id) if user_id else None
 
 
 class Resume(ResumeBase):

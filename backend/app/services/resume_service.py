@@ -7,64 +7,105 @@ from ..utils import gridfs
 from ..models.resume import ResumeCreate, ResumeInDB, Resume, ResumeVersionCreate, ResumeVersionInDB, ResumeVersion, ResumeWithVersions
 
 async def upload_resume(
-    profile_id: str,
     file_content: bytes,
     original_filename: str,
-    file_type: str
+    file_type: str,
+    profile_id: str = None,
+    user_id: str = None
 ) -> Resume:
     """
-    Upload a new resume for a profile
+    Upload a new resume for a profile or user
     """
+    if not profile_id and not user_id:
+        raise ValueError("Either profile_id or user_id must be provided")
+    
     db = get_database()
     resumes_collection = db["resumes"]
     
-    # Set all existing resumes for this profile to not current
-    await resumes_collection.update_many(
-        {"profile_id": ObjectId(profile_id)},
-        {"$set": {"is_current": False}}
-    )
+    # Set all existing resumes to not current
+    if profile_id:
+        await resumes_collection.update_many(
+            {"profile_id": ObjectId(profile_id)},
+            {"$set": {"is_current": False}}
+        )
+    elif user_id:
+        await resumes_collection.update_many(
+            {"user_id": ObjectId(user_id)},
+            {"$set": {"is_current": False}}
+        )
     
     # Upload file to GridFS
     metadata = {
-        "profile_id": profile_id,
         "file_type": file_type,
         "upload_date": datetime.utcnow()
     }
     
+    if profile_id:
+        metadata["profile_id"] = profile_id
+    if user_id:
+        metadata["user_id"] = user_id
+    
     file_id = await gridfs.upload_file(file_content, original_filename, metadata)
     
     # Create resume document
-    resume_data = ResumeInDB(
-        profile_id=ObjectId(profile_id),
-        original_filename=original_filename,
-        file_type=file_type,
-        file_id=file_id,
-        created_at=datetime.utcnow(),
-        is_current=True,
-        parsed_content={}  # Will be filled by parser service
-    )
+    resume_data = {
+        "original_filename": original_filename,
+        "file_type": file_type,
+        "file_id": file_id,
+        "created_at": datetime.utcnow(),
+        "is_current": True,
+        "parsed_content": {}  # Will be filled by parser service
+    }
+    
+    if profile_id:
+        resume_data["profile_id"] = ObjectId(profile_id)
+    if user_id:
+        resume_data["user_id"] = ObjectId(user_id)
     
     # Insert into database
-    result = await resumes_collection.insert_one(resume_data.dict(by_alias=True))
+    result = await resumes_collection.insert_one(resume_data)
     
     # Get the created resume
     created_resume = await resumes_collection.find_one({"_id": result.inserted_id})
     
+    # Convert ObjectId fields to strings before passing to Resume model
+    if created_resume:
+        if "_id" in created_resume and isinstance(created_resume["_id"], ObjectId):
+            created_resume["_id"] = str(created_resume["_id"])
+        if "user_id" in created_resume and isinstance(created_resume["user_id"], ObjectId):
+            created_resume["user_id"] = str(created_resume["user_id"])
+        if "profile_id" in created_resume and isinstance(created_resume["profile_id"], ObjectId):
+            created_resume["profile_id"] = str(created_resume["profile_id"])
+    
     return Resume(**created_resume)
 
-async def get_current_resume(profile_id: str) -> Optional[Resume]:
+async def get_current_resume(profile_id: str = None, user_id: str = None) -> Optional[Resume]:
     """
-    Get the current resume for a profile
+    Get the current resume for a profile or user
     """
+    if not profile_id and not user_id:
+        raise ValueError("Either profile_id or user_id must be provided")
+    
     db = get_database()
     resumes_collection = db["resumes"]
     
-    resume_data = await resumes_collection.find_one({
-        "profile_id": ObjectId(profile_id),
-        "is_current": True
-    })
+    query = {"is_current": True}
+    if profile_id:
+        query["profile_id"] = ObjectId(profile_id)
+    elif user_id:
+        query["user_id"] = ObjectId(user_id)
+    
+    resume_data = await resumes_collection.find_one(query)
     
     if resume_data:
+        # Convert ObjectId fields to strings
+        if "_id" in resume_data and isinstance(resume_data["_id"], ObjectId):
+            resume_data["_id"] = str(resume_data["_id"])
+        if "user_id" in resume_data and isinstance(resume_data["user_id"], ObjectId):
+            resume_data["user_id"] = str(resume_data["user_id"])
+        if "profile_id" in resume_data and isinstance(resume_data["profile_id"], ObjectId):
+            resume_data["profile_id"] = str(resume_data["profile_id"])
+        
         return Resume(**resume_data)
     return None
 
@@ -78,6 +119,14 @@ async def get_resume_by_id(resume_id: str) -> Optional[Resume]:
     resume_data = await resumes_collection.find_one({"_id": ObjectId(resume_id)})
     
     if resume_data:
+        # Convert ObjectId fields to strings
+        if "_id" in resume_data and isinstance(resume_data["_id"], ObjectId):
+            resume_data["_id"] = str(resume_data["_id"])
+        if "user_id" in resume_data and isinstance(resume_data["user_id"], ObjectId):
+            resume_data["user_id"] = str(resume_data["user_id"])
+        if "profile_id" in resume_data and isinstance(resume_data["profile_id"], ObjectId):
+            resume_data["profile_id"] = str(resume_data["profile_id"])
+        
         return Resume(**resume_data)
     return None
 
@@ -116,7 +165,45 @@ async def get_resumes_by_profile(profile_id: str) -> List[Resume]:
     cursor = resumes_collection.find({"profile_id": ObjectId(profile_id)}).sort("created_at", -1)
     resumes = await cursor.to_list(length=None)
     
-    return [Resume(**resume) for resume in resumes]
+    # Convert ObjectId fields to strings before passing to Resume model
+    formatted_resumes = []
+    for resume in resumes:
+        # Manual conversion of MongoDB ObjectIds to strings
+        if "_id" in resume and isinstance(resume["_id"], ObjectId):
+            resume["_id"] = str(resume["_id"])
+        if "user_id" in resume and isinstance(resume["user_id"], ObjectId):
+            resume["user_id"] = str(resume["user_id"])
+        if "profile_id" in resume and isinstance(resume["profile_id"], ObjectId):
+            resume["profile_id"] = str(resume["profile_id"])
+        
+        formatted_resumes.append(Resume(**resume))
+    
+    return formatted_resumes
+
+async def get_resumes_by_user(user_id: str) -> List[Resume]:
+    """
+    Get all resumes for a user
+    """
+    db = get_database()
+    resumes_collection = db["resumes"]
+    
+    cursor = resumes_collection.find({"user_id": ObjectId(user_id)}).sort("created_at", -1)
+    resumes = await cursor.to_list(length=None)
+    
+    # Convert ObjectId fields to strings before passing to Resume model
+    formatted_resumes = []
+    for resume in resumes:
+        # Manual conversion of MongoDB ObjectIds to strings
+        if "_id" in resume and isinstance(resume["_id"], ObjectId):
+            resume["_id"] = str(resume["_id"])
+        if "user_id" in resume and isinstance(resume["user_id"], ObjectId):
+            resume["user_id"] = str(resume["user_id"])
+        if "profile_id" in resume and isinstance(resume["profile_id"], ObjectId):
+            resume["profile_id"] = str(resume["profile_id"])
+        
+        formatted_resumes.append(Resume(**resume))
+    
+    return formatted_resumes
 
 async def delete_resume(resume_id: str) -> bool:
     """
@@ -171,6 +258,15 @@ async def create_resume_version(
     
     created_version = await resume_versions_collection.find_one({"_id": result.inserted_id})
     
+    # Convert ObjectId fields to strings
+    if created_version:
+        if "_id" in created_version and isinstance(created_version["_id"], ObjectId):
+            created_version["_id"] = str(created_version["_id"])
+        if "resume_id" in created_version and isinstance(created_version["resume_id"], ObjectId):
+            created_version["resume_id"] = str(created_version["resume_id"])
+        if "job_id" in created_version and isinstance(created_version["job_id"], ObjectId):
+            created_version["job_id"] = str(created_version["job_id"])
+    
     return ResumeVersion(**created_version)
 
 async def get_resume_versions(resume_id: str) -> List[ResumeVersion]:
@@ -183,7 +279,20 @@ async def get_resume_versions(resume_id: str) -> List[ResumeVersion]:
     cursor = resume_versions_collection.find({"resume_id": ObjectId(resume_id)}).sort("created_at", -1)
     versions = await cursor.to_list(length=None)
     
-    return [ResumeVersion(**version) for version in versions]
+    # Convert ObjectId fields to strings before passing to ResumeVersion model
+    formatted_versions = []
+    for version in versions:
+        # Manual conversion of MongoDB ObjectIds to strings
+        if "_id" in version and isinstance(version["_id"], ObjectId):
+            version["_id"] = str(version["_id"])
+        if "resume_id" in version and isinstance(version["resume_id"], ObjectId):
+            version["resume_id"] = str(version["resume_id"])
+        if "job_id" in version and isinstance(version["job_id"], ObjectId):
+            version["job_id"] = str(version["job_id"])
+        
+        formatted_versions.append(ResumeVersion(**version))
+    
+    return formatted_versions
 
 async def get_resume_with_versions(resume_id: str) -> Optional[ResumeWithVersions]:
     """
