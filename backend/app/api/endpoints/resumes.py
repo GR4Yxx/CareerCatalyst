@@ -18,45 +18,76 @@ async def upload_resume(
 ):
     """
     Upload a new resume.
-    If profile_id is not provided, uses the current user's profile.
+    If profile_id is provided, links to that profile, otherwise links directly to the user.
     """
     # Validate file type
     allowed_types = [
         "application/pdf",
         "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain"
     ]
     
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid file type. Only PDF and Word documents are allowed."
+            detail="Invalid file type. Only PDF, Word, and text documents are allowed."
         )
-    
-    # If profile_id is not provided, get the user's profile
-    if not profile_id:
-        profile = await profile_service.get_profile_by_user_id(current_user.id)
-        
-        if not profile:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Profile not found. Please create a profile first."
-            )
-        
-        profile_id = profile.id
     
     # Read file content
     file_content = await file.read()
     
     # Upload resume
-    resume = await resume_service.upload_resume(
-        profile_id=profile_id,
-        file_content=file_content,
-        original_filename=file.filename,
-        file_type=file.content_type
-    )
+    try:
+        if profile_id:
+            # Link to profile if provided
+            resume = await resume_service.upload_resume(
+                file_content=file_content,
+                original_filename=file.filename,
+                file_type=file.content_type,
+                profile_id=profile_id
+            )
+        else:
+            # Otherwise link directly to user
+            resume = await resume_service.upload_resume(
+                file_content=file_content,
+                original_filename=file.filename,
+                file_type=file.content_type,
+                user_id=current_user.id
+            )
+        return resume
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+@router.get("/user/current", response_model=Resume)
+async def get_current_user_resume(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the current resume for the authenticated user.
+    """
+    resume = await resume_service.get_current_resume(user_id=current_user.id)
+    
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No current resume found for this user."
+        )
     
     return resume
+
+@router.get("/user", response_model=List[Resume])
+async def get_user_resumes(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all resumes for the authenticated user.
+    """
+    resumes = await resume_service.get_resumes_by_user(current_user.id)
+    return resumes
 
 @router.get("/profile/{profile_id}", response_model=List[Resume])
 async def get_resumes_by_profile(
