@@ -237,7 +237,16 @@ async function handleSearch() {
 
 // View job details
 function viewJobDetails(jobId: string) {
-  router.push(`/dashboard/jobs/${jobId}`)
+  // Find the selected job
+  const selectedJob = jobMatches.value.find((match) => match.job._id === jobId)
+
+  if (selectedJob) {
+    // Save selected job to localStorage for the ATS Intelligence page
+    localStorage.setItem('selectedJob', JSON.stringify(selectedJob))
+
+    // Navigate to ATS Intelligence page
+    router.push('/dashboard/ats-intelligence')
+  }
 }
 
 // Save a job
