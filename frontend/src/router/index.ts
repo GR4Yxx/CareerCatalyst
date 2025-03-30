@@ -89,6 +89,11 @@ const router = createRouter({
           name: 'skills',
           component: () => import('../views/dashboard/SkillsView.vue'),
         },
+        {
+          path: 'interview-prep',
+          name: 'interview-prep',
+          component: () => import('../views/dashboard/InterviewPrepView.vue'),
+        },
       ],
     },
     // Wildcard route for 404

@@ -148,7 +148,6 @@
                 v-model="formData.termsAgreed"
                 class="border-indigo-700/30 data-[state=checked]:bg-indigo-600"
                 :disabled="isLoading"
-                required
               />
               <Label for="terms" class="text-sm font-medium text-indigo-200">
                 I agree to the
@@ -226,8 +225,7 @@ const formIsValid = computed(() => {
     formData.name.trim() !== '' &&
     formData.email.trim() !== '' &&
     formData.password.length >= 8 &&
-    formData.password === confirmPassword.value &&
-    formData.termsAgreed
+    formData.password === confirmPassword.value
   )
 })
 
@@ -242,11 +240,6 @@ async function handleRegister() {
 
   if (formData.password.length < 8) {
     error.value = 'Password must be at least 8 characters'
-    return
-  }
-
-  if (!formData.termsAgreed) {
-    error.value = 'You must agree to the Terms of Service and Privacy Policy'
     return
   }
 

@@ -60,7 +60,15 @@
 import { ref } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import Navbar from '@/components/navigation/NavBar.vue'
-import { LayoutDashboard, Menu, Sparkles, Briefcase, FileSearch, Map } from 'lucide-vue-next'
+import {
+  LayoutDashboard,
+  Menu,
+  Sparkles,
+  Briefcase,
+  FileSearch,
+  Map,
+  MessageSquare,
+} from 'lucide-vue-next'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -74,6 +82,7 @@ const menuItems = [
   { label: 'Job Finder', path: '/dashboard/job-finder', icon: Briefcase },
   { label: 'ATS Intelligence', path: '/dashboard/ats-intelligence', icon: FileSearch },
   { label: 'Career Path', path: '/dashboard/career-path', icon: Map },
+  { label: 'Interview Preparation', path: '/dashboard/interview-prep', icon: MessageSquare },
 ]
 
 const isActive = (path: string) => {
