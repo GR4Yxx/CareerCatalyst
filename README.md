@@ -14,6 +14,44 @@ Today's job market presents three critical challenges:
 
 CareerCatalyst addresses these challenges by providing an end-to-end solution that bridges the gap between a user's current skills and potential opportunities.
 
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Node.js and npm (for local development)
+- MongoDB (for local development without Docker)
+
+### Environment Setup
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/CareerCatalyst.git
+cd CareerCatalyst
+```
+
+2. Create a `.env` file based on the provided `.env.example` template
+
+```bash
+cp .env.example .env
+```
+
+3. Update the `.env` file with your API keys:
+
+   - `GEMINI_API_KEY`: Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - `JSEARCH_API_KEY`: Get from [RapidAPI JSearch](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch)
+   - `GOOGLE_API_KEY`: If using other Google services
+
+4. Start the application with Docker Compose
+
+```bash
+cd docker
+docker-compose up -d
+```
+
+5. Access the application at http://localhost
+
 ## Core Value Proposition
 
 - **Skills Intelligence**: Extract, categorize, and contextualize skills from resumes

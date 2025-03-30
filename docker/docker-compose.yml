@@ -8,6 +8,8 @@ services:
       dockerfile: Dockerfile
     container_name: career-catalyst-backend
     restart: unless-stopped
+    env_file:
+      - ./.env
     volumes:
       - ../backend:/app
       - backend_data:/app/data
@@ -18,6 +20,8 @@ services:
       - DATABASE_NAME=career_catalyst
       - SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-for-jwt-please-change-in-production}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - JSEARCH_API_KEY=${JSEARCH_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
       - DEBUG=True
       - ENVIRONMENT=development
     depends_on:
@@ -32,6 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: career-catalyst-frontend
     restart: unless-stopped
+    env_file:
+      - ./.env
     volumes:
       - ../frontend:/app
       - /app/node_modules
@@ -48,6 +54,8 @@ services:
     image: mongo:latest
     container_name: career-catalyst-mongodb
     restart: always
+    env_file:
+      - ./.env
     ports:
       - "27017:27017"
     environment:
